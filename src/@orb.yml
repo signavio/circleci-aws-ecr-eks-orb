@@ -1,0 +1,149 @@
+version: 2.1
+
+description: |
+  Builds and pushes docker images using https://github.com/CircleCI-Public/aws-eks-orb
+  Updates deployments on EKS clusters (e.g. qa/staging) that should always run on the latest image.
+  EKS cluster might be managed via CD tools e.g. argocd.
+  Support AWS Organization setups with multiple AWS accounts and EKS clusters by sts assume-role
+  Source code: https://github.com/signavio/circleci-aws-ecr-eks-orb
+
+orbs:
+  aws-ecr: circleci/aws-ecr@6.4.0
+
+executors:
+  default:
+    description: |
+      Container to run the steps.
+
+    parameters:
+      image:
+        type: string
+        default: ubuntu-1604:201903-01
+
+    machine:
+      image: <<parameters.executor>>
+
+jobs:
+  build-push-restart:
+    description: >
+      Uses circleci/aws-ecr to build and publish the docker images.
+      Runs kubectl rollout restart deployment/NAME afterwards to refresh the latest tag on cluster.
+    executor: <<parameters.executor>>
+
+    parameters:
+      executor:
+        description: executor to use for this job
+        type: executor
+        default: default
+      ecr_repo:
+        description: The ecr repo to push the docker images.
+        type: string
+      tags:
+        description: | 
+          The docker images tag to be applied.
+          (defaults to latest,${CIRCLE_SHA1})
+        type: string
+        default: "latest,${CIRCLE_SHA1}"
+      eks_account_id:
+        description: | 
+          Env var of the account id of the EKS cluster containing the deployment
+          (default EKS_ACCOUNT_ID)
+        type: env_var_name
+        default: EKS_ACCOUNT_ID
+      role_in_target_account:
+        description: |
+          Env var of the name of the role to be assumed to update the kubeconfig
+          (defaults to ASSUME_ROLE)
+        type: env_var_name
+        description: ASSUME_ROLE
+      role_in_eks_cluster:
+        description: |
+          Env var kubectl to assume while accessing the K8S applied.
+          (defaults to ASSUME_ROLE_EKS)
+          type: env_var_name
+          default: ASSUME_ROLE_EKS
+      aws_region:
+        description: |
+          Env var of AWS region to operate in
+          (defaults to AWS_REGION)
+        type: env_var_name
+        default: AWS_REGION
+      eks_cluster_name:
+        description: |
+          Env var of EKS cluster name
+          (defaults to EKS_NAME)
+        type: env_var_name
+        default: EKS_NAME
+      deployment_name:
+        description: Name of the deployment to restart
+        type: string
+
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - aws-ecr/ecr-login-for-secondary-account
+      - aws-ecr/build-and-push-image:
+          attach-workspace: true
+          repo: <<parameters.ecr_repo>>
+          tag: <<parameters.tags>>
+      - run:
+          name: "install kubectl"
+          command: |
+            sudo wget -O aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
+            sudo chmod +x ./aws-iam-authenticator
+            sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
+
+            # sudo wget -O kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
+            sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
+            sudo chmod +x ./kubectl
+            sudo cp ./kubectl /bin/kubectl
+
+            sudo apt-get install jq
+      - run:
+          name: Restart deployment
+          command: |
+            tokenResponse=$(aws sts assume-role \
+            --role-arn "arn:aws:iam::<<parameters.eks_account_id>>:role/<<parameters.role_in_target_account>>" \
+            --role-session-name AWSCLI-Session)
+
+            aws configure set aws_access_key_id \
+            $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+            --profile kubectl
+
+            aws configure set aws_secret_access_key \
+            $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+            --profile kubectl
+
+            aws configure set aws_session_token \
+            $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+            --profile kubectl
+
+            aws --profile kubectl eks \ 
+            --region <<parameters.aws_region>> \ 
+            update-kubeconfig \ 
+            --name <<parameters.eks_cluster_name>> \ 
+            --role-arn arn:aws:iam::<<parameters.eks_account_id>>:role/<<parameters.role_in_eks_cluster>>
+
+            echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+            source $BASH_ENV
+
+            kubectl rollout restart deployment/<<parameters.deployment_name>>
+examples:
+  build-push-restart-staging:
+    description: 
+    usage:
+        version: 2.1
+
+        orbs:
+          aws-ecr-eks: signavio/aws-ecr-eks@x.y
+
+        workflows:
+          version: 2
+          aws-ecr-eks:
+            jobs:
+              - aws-ecr-eks/build-push-restart:
+                  context: ecr
+                  attach-workspace: true
+                  ecr_repo: myecrrepo
+                  deployment_name: mydeployment
+
