@@ -21,7 +21,7 @@ executors:
         default: ubuntu-1604:201903-01
 
     machine:
-      image: <<parameters.executor>>
+      image: <<parameters.image>>
 
 jobs:
   build-push-restart:
@@ -39,13 +39,13 @@ jobs:
         description: The ecr repo to push the docker images.
         type: string
       tags:
-        description: | 
+        description: |
           The docker images tag to be applied.
           (defaults to latest,${CIRCLE_SHA1})
         type: string
         default: "latest,${CIRCLE_SHA1}"
       eks_account_id:
-        description: | 
+        description: |
           Env var of the account id of the EKS cluster containing the deployment
           (default EKS_ACCOUNT_ID)
         type: env_var_name
@@ -55,13 +55,7 @@ jobs:
           Env var of the name of the role to be assumed to update the kubeconfig
           (defaults to ASSUME_ROLE)
         type: env_var_name
-        description: ASSUME_ROLE
-      role_in_eks_cluster:
-        description: |
-          Env var kubectl to assume while accessing the K8S applied.
-          (defaults to ASSUME_ROLE_EKS)
-          type: env_var_name
-          default: ASSUME_ROLE_EKS
+        default: ASSUME_ROLE
       aws_region:
         description: |
           Env var of AWS region to operate in
@@ -103,7 +97,7 @@ jobs:
           name: Restart deployment
           command: |
             tokenResponse=$(aws sts assume-role \
-            --role-arn "arn:aws:iam::<<parameters.eks_account_id>>:role/<<parameters.role_in_target_account>>" \
+            --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
             --role-session-name AWSCLI-Session)
 
             aws configure set aws_access_key_id \
@@ -118,32 +112,31 @@ jobs:
             $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
             --profile kubectl
 
-            aws --profile kubectl eks \ 
-            --region <<parameters.aws_region>> \ 
-            update-kubeconfig \ 
-            --name <<parameters.eks_cluster_name>> \ 
-            --role-arn arn:aws:iam::<<parameters.eks_account_id>>:role/<<parameters.role_in_eks_cluster>>
+            aws --profile kubectl --region $<<parameters.aws_region>> \
+              eks update-kubeconfig \
+              --name $<<parameters.eks_cluster_name>> \
+              --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
 
             echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
             source $BASH_ENV
 
             kubectl rollout restart deployment/<<parameters.deployment_name>>
+
 examples:
   build-push-restart-staging:
-    description: 
+    description:
     usage:
-        version: 2.1
+      version: 2.1
 
-        orbs:
-          aws-ecr-eks: signavio/aws-ecr-eks@x.y
+      orbs:
+        aws-ecr-eks: signavio/aws-ecr-eks@x.y
 
-        workflows:
-          version: 2
-          aws-ecr-eks:
-            jobs:
-              - aws-ecr-eks/build-push-restart:
-                  context: ecr
-                  attach-workspace: true
-                  ecr_repo: myecrrepo
-                  deployment_name: mydeployment
-
+      workflows:
+        version: 2
+        aws-ecr-eks:
+          jobs:
+            - build-push-restart:
+                context: ecr
+                attach-workspace: true
+                ecr_repo: myecrrepo
+                deployment_name: mydeployment
