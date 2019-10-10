@@ -71,6 +71,13 @@ jobs:
       deployment_name:
         description: Name of the deployment to restart
         type: string
+      k8s_namespace:
+        description: Kubernetes namespace the deployment is located in
+        type: string
+      dockerfile:
+        description: Dockerfile name
+        type: string
+        default: Dockerfile
 
     machine:
       image: ubuntu-1604:201903-01
@@ -80,6 +87,7 @@ jobs:
           attach-workspace: true
           repo: <<parameters.ecr_repo>>
           tag: <<parameters.tags>>
+          dockerfile: <<parameters.dockerfile>>
       - run:
           name: "install kubectl"
           command: |
@@ -120,7 +128,7 @@ jobs:
             echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
             source $BASH_ENV
 
-            kubectl rollout restart deployment/<<parameters.deployment_name>>
+            kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
 
 examples:
   build-push-restart-staging:
