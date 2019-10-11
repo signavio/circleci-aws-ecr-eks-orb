@@ -1,9 +1,43 @@
 version: 2.1
 
 orbs:
-  orb-tools: circleci/orb-tools@8.20.0
+  orb-tools: circleci/orb-tools@8.27.4
+  cli: circleci/circleci-cli@0.1.4
+
+jobs:
+  validate:
+    executor: cli/default
+    steps:
+      - checkout
+      - orb-tools/validate:
+          orb-path: src/@orb.yml
 
 workflows:
-  lint-validate:
+  publish:
     jobs:
       - orb-tools/lint
+      - validate
+      - orb-tools/publish-dev:
+          orb-name: signavio/aws-ecr-eks
+          orb-path: src/@orb.yml
+          checkout: true
+          publish-token-variable: CIRCLECI_TOKEN
+          requires:
+            - orb-tools/lint
+            - validate
+          filters:
+            branches:
+              ignore:
+                - master
+      - orb-tools/increment:
+          orb-ref: signavio/aws-ecr-eks
+          orb-path: src/@orb.yml
+          checkout: true
+          publish-token-variable: CIRCLECI_TOKEN
+          requires:
+            - orb-tools/lint
+            - validate
+          filters:
+            branches:
+              only:
+                - master
