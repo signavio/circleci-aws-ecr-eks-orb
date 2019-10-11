@@ -4,6 +4,12 @@ orbs:
   orb-tools: circleci/orb-tools@8.20.0
 
 workflows:
-  lint-validate:
+  publish:
     jobs:
       - orb-tools/lint
+      - orb-tools/publish-dev:
+          orb-name: signavio/aws-ecr-eks
+          orb-path: src/@orb.yml
+          token-variable: CIRCLECI_TOKEN
+          requires:
+            - orb-tools/lint
