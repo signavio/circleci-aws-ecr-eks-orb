@@ -91,10 +91,6 @@ jobs:
       - run:
           name: "install kubectl"
           command: |
-            sudo wget -O aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator
-            sudo chmod +x ./aws-iam-authenticator
-            sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
-
             # sudo wget -O kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
             sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
             sudo chmod +x ./kubectl
