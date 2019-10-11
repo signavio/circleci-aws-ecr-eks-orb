@@ -10,6 +10,6 @@ workflows:
       - orb-tools/publish-dev:
           orb-name: signavio/aws-ecr-eks
           orb-path: src/@orb.yml
-          token-variable: CIRCLECI_TOKEN
+          publish-token-variable: CIRCLECI_TOKEN
           requires:
             - orb-tools/lint
