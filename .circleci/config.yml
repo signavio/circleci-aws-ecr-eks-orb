@@ -37,7 +37,7 @@ workflows:
           requires:
             - orb-tools/lint
             - validate
-          filters:
-            branches:
-              only:
-                - master
+          # filters:
+          #   branches:
+          #     only:
+          #       - master
