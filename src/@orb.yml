@@ -78,6 +78,10 @@ jobs:
         description: Dockerfile name
         type: string
         default: Dockerfile
+      path:
+        description: Path to the directory containing your Dockerfile and build context.
+        type: string
+        default: .
 
     machine:
       image: ubuntu-1604:201903-01
@@ -86,6 +90,7 @@ jobs:
       - aws-ecr/build-and-push-image:
           attach-workspace: true
           repo: <<parameters.ecr_repo>>
+          path: <<parameters.path>>
           tag: <<parameters.tags>>
           dockerfile: <<parameters.dockerfile>>
       - run:
