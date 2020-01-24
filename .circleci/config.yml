@@ -32,6 +32,7 @@ workflows:
       - orb-tools/increment:
           orb-ref: signavio/aws-ecr-eks
           orb-path: src/@orb.yml
+          segment: minor
           checkout: true
           publish-token-variable: CIRCLECI_TOKEN
           requires:
