@@ -8,7 +8,7 @@ description: |
   Source code: https://github.com/signavio/circleci-aws-ecr-eks-orb
 
 orbs:
-  aws-ecr: circleci/aws-ecr@6.4.0
+  aws-ecr: circleci/aws-ecr@6.7.0
 
 executors:
   default:
@@ -35,7 +35,7 @@ jobs:
         description: executor to use for this job
         type: executor
         default: default
-      ecr_repo:
+      repo:
         description: The ecr repo to push the docker images.
         type: string
       tags:
@@ -89,9 +89,9 @@ jobs:
       - aws-ecr/ecr-login-for-secondary-account
       - aws-ecr/build-and-push-image:
           attach-workspace: true
-          repo: <<parameters.ecr_repo>>
+          repo: <<parameters.repo>>
           path: <<parameters.path>>
-          tag: <<parameters.tags>>
+          tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
       - run:
           name: "Install tools"
@@ -147,5 +147,5 @@ examples:
             - build-push-restart:
                 context: ecr
                 attach-workspace: true
-                ecr_repo: myecrrepo
+                repo: myecrrepo
                 deployment_name: mydeployment
