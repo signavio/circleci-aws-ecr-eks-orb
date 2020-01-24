@@ -38,7 +38,7 @@ jobs:
       repo:
         description: The ecr repo to push the docker images.
         type: string
-      tags:
+      tag:
         description: |
           The docker images tag to be applied.
           (defaults to latest,${CIRCLE_SHA1})
