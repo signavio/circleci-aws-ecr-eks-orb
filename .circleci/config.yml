@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  orb-tools: circleci/orb-tools@8.27.4
+  orb-tools: circleci/orb-tools@9.0.0
   cli: circleci/circleci-cli@0.1.4
 
 jobs:
@@ -29,15 +29,16 @@ workflows:
             branches:
               ignore:
                 - master
-      - orb-tools/increment:
-          orb-ref: signavio/aws-ecr-eks
-          orb-path: src/@orb.yml
+      - orb-tools/dev-promote-prod-from-commit-subject:
+          orb-name: signavio/aws-ecr-eks
           checkout: true
+          add-pr-comment: true
           publish-token-variable: CIRCLECI_TOKEN
+          publish-version-tag: false
+          fail-if-semver-not-indicated: false
           requires:
             - orb-tools/lint
             - validate
           filters:
             branches:
-              only:
-                - master
+              only: master
