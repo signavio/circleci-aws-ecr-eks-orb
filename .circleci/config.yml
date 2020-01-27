@@ -25,10 +25,6 @@ workflows:
           requires:
             - orb-tools/lint
             - validate
-          filters:
-            branches:
-              ignore:
-                - master
       - orb-tools/dev-promote-prod-from-commit-subject:
           orb-name: signavio/aws-ecr-eks
           checkout: true
@@ -37,8 +33,7 @@ workflows:
           publish-version-tag: false
           fail-if-semver-not-indicated: false
           requires:
-            - orb-tools/lint
-            - validate
+            - orb-tools/publish-dev
           filters:
             branches:
               only: master
