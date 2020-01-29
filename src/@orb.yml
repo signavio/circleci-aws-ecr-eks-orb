@@ -146,6 +146,5 @@ examples:
           jobs:
             - build-push-restart:
                 context: ecr
-                attach-workspace: true
                 repo: myecrrepo
                 deployment_name: mydeployment
