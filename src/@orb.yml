@@ -134,6 +134,9 @@ jobs:
             source $BASH_ENV
 
             kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
+            if [ "<<parameters.additional_deployment_name>>" ]; then
+              kubectl rollout restart deployment/<<parameters.additional_deployment_name>> -n <<parameters.k8s_namespace>>
+            fi
 
 examples:
   build-push-restart-staging:
