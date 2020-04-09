@@ -71,6 +71,10 @@ jobs:
       deployment_name:
         description: Name of the deployment to restart
         type: string
+      additional_deployment_name:
+        description: Name of the additional deployment to restart
+        type: string
+        default: ""
       k8s_namespace:
         description: Kubernetes namespace the deployment is located in
         type: string
@@ -130,6 +134,9 @@ jobs:
             source $BASH_ENV
 
             kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
+            if [ "<<parameters.additional_deployment_name>>" ]; then
+              kubectl rollout restart deployment/<<parameters.additional_deployment_name>> -n <<parameters.k8s_namespace>>
+            fi
 
 examples:
   build-push-restart-staging:
