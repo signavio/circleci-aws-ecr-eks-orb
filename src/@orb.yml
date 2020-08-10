@@ -101,7 +101,7 @@ jobs:
           path: <<parameters.path>>
           tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
-          extra-build-args: <<parameters.extra-build-args>>
+          extra-build-args: <<parameters.extra_build_args>>
       - run:
           name: "Install tools"
           command: |
