@@ -86,6 +86,10 @@ jobs:
         description: Path to the directory containing your Dockerfile and build context.
         type: string
         default: .
+      extra-build-args:
+        description: Additional arguments to pass to the Docker build step
+        type: string
+        default: ""
 
     machine:
       image: ubuntu-1604:201903-01
@@ -97,6 +101,7 @@ jobs:
           path: <<parameters.path>>
           tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
+          extra-build-args: <<parameters.extra-build-args>>
       - run:
           name: "Install tools"
           command: |
