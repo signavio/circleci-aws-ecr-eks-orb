@@ -86,7 +86,7 @@ jobs:
         description: Path to the directory containing your Dockerfile and build context.
         type: string
         default: .
-      extra-build-args:
+      extra_build_args:
         description: Additional arguments to pass to the Docker build step
         type: string
         default: ""
