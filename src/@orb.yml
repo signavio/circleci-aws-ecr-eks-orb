@@ -111,14 +111,6 @@ jobs:
           dockerfile: <<parameters.dockerfile>>
           extra-build-args: <<parameters.extra_build_args>>
       - run:
-          name: "Install tools"
-          command: |
-            # sudo wget -O kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
-            sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
-            sudo chmod +x ./kubectl
-            sudo cp ./kubectl /bin/kubectl
-            sudo apt-get install jq
-      - run:
           name: Run trivy checks on Docker image
           command: |
             if [ "<<parameters.trivy_enabled>>" ]; then
@@ -128,6 +120,14 @@ jobs:
             else
               echo "Skipping trivy checks"
             fi
+      - run:
+          name: "Install tools"
+          command: |
+            # sudo wget -O kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
+            sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
+            sudo chmod +x ./kubectl
+            sudo cp ./kubectl /bin/kubectl
+            sudo apt-get install jq
       - run:
           name: Restart deployment
           command: |
