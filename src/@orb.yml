@@ -90,6 +90,10 @@ jobs:
         description: Additional arguments to pass to the Docker build step
         type: string
         default: ""
+      run_trivy_checks:
+        description: Use trivy to check Docker image for security vulnerabilities
+        type: boolean
+        default: false
 
     machine:
       image: ubuntu-1604:201903-01
@@ -113,9 +117,13 @@ jobs:
       - run:
           name: Run trivy checks on Docker image
           command: |
-            wget -O trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.15.0/trivy_0.15.0_Linux-64bit.tar.gz
-            tar xzf trivy.tar.gz
-            trivy image <<parameters.repo>>:<<parameters.tag>>
+            if [ "<<parameters.run_trivy_checks>>" ]; then
+              wget -O trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.15.0/trivy_0.15.0_Linux-64bit.tar.gz
+              tar xzf trivy.tar.gz
+              trivy image <<parameters.repo>>:<<parameters.tag>>
+            else
+              echo "Skipping trivy checks"
+            fi
       - run:
           name: Restart deployment
           command: |
