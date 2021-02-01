@@ -113,7 +113,7 @@ jobs:
       - run:
           name: "AWS ECR image scan findings"
           command: |
-            findingsCount=$(aws ecr describe-image-scan-findings --region eu-central-1 --repository-name spi-fluffy --image-id imageTag=latest | jq '.imageScanFindings.findingSeverityCounts')
+            findingsCount=$(aws ecr describe-image-scan-findings --region eu-central-1 --repository-name <<parameters.repo>> --image-id imageTag=<<parameters.tag>> | jq '.imageScanFindings.findingSeverityCounts')
             echo $findingsCount
       - run:
           name: Restart deployment
