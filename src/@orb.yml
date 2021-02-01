@@ -109,8 +109,12 @@ jobs:
             sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
-
             sudo apt-get install jq
+      - run:
+          name: "AWS ECR image scan findings"
+          command: |
+            findingsCount=$(aws ecr describe-image-scan-findings --region eu-central-1 --repository-name spi-fluffy --image-id imageTag=latest | jq '.imageScanFindings.findingSeverityCounts')
+            echo $findingsCount
       - run:
           name: Restart deployment
           command: |
