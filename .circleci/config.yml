@@ -18,6 +18,7 @@ workflows:
       - orb-tools/lint
       - validate
       - orb-tools/publish-dev:
+          context: circleci-orb
           orb-name: signavio/aws-ecr-eks
           orb-path: src/@orb.yml
           checkout: true
@@ -26,6 +27,7 @@ workflows:
             - orb-tools/lint
             - validate
       - orb-tools/dev-promote-prod-from-commit-subject:
+          context: circleci-orb
           orb-name: signavio/aws-ecr-eks
           checkout: true
           add-pr-comment: true
