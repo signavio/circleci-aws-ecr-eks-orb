@@ -113,8 +113,13 @@ jobs:
       - run:
           name: "AWS ECR image scan findings"
           command: |
-            findingsCount=$(aws ecr describe-image-scan-findings --region eu-central-1 --repository-name <<parameters.repo>> --image-id imageTag=<<parameters.tag>> | jq '.imageScanFindings.findingSeverityCounts')
-            echo $findingsCount
+            report=$(aws ecr describe-image-scan-findings --region eu-central-1 --repository-name <<parameters.repo>> --image-id imageTag=<<parameters.tag>>)
+            reportStatus=$(echo $report | jq '.imageScanStatus.status')
+            reportFindings=$(echo $report | jq '.imageScanFindings.findings')
+            reportFindingsCount=$(echo $report | jq '.imageScanFindings.findingSeverityCounts')
+            echo $reportStatus
+            echo $reportFindings
+            echo $reportFindingsCount
       - run:
           name: Restart deployment
           command: |
