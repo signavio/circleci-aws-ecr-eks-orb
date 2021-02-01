@@ -22,7 +22,7 @@ workflows:
           orb-name: signavio/aws-ecr-eks
           orb-path: src/@orb.yml
           checkout: true
-          publish-token-variable: CIRCLECI_TOKEN
+          publish-token-variable: CIRCLE_TOKEN
           requires:
             - orb-tools/lint
             - validate
@@ -31,7 +31,7 @@ workflows:
           orb-name: signavio/aws-ecr-eks
           checkout: true
           add-pr-comment: true
-          publish-token-variable: CIRCLECI_TOKEN
+          publish-token-variable: CIRCLE_TOKEN
           publish-version-tag: false
           fail-if-semver-not-indicated: false
           requires:
