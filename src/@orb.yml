@@ -113,7 +113,7 @@ jobs:
       - run:
           name: "AWS ECR image scan findings"
           command: |
-            ASSUME_ROLE="$(aws sts assume-role --role-arn arn:aws:iam::893963170360:role/DeveloperAccessRole --role-session-name image-scan-findings --duration-seconds 900 --output json)"
+            ASSUME_ROLE="$(aws sts assume-role --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID}:role/DeveloperAccessRole --role-session-name image-scan-findings --duration-seconds 900 --output json)"
             export AWS_SESSION_TOKEN="$(echo $ASSUME_ROLE | jq -r ".Credentials.SessionToken")"
             export AWS_ACCESS_KEY_ID="$(echo $ASSUME_ROLE | jq -r ".Credentials.AccessKeyId")"
             export AWS_SECRET_ACCESS_KEY="$(echo $ASSUME_ROLE | jq -r ".Credentials.SecretAccessKey")"
