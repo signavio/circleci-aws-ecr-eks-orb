@@ -8,7 +8,7 @@ description: |
   Source code: https://github.com/signavio/circleci-aws-ecr-eks-orb
 
 orbs:
-  aws-ecr: circleci/aws-ecr@6.7.0
+  aws-ecr: circleci/aws-ecr@6.15.3
 
 executors:
   default:
@@ -94,7 +94,7 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
-      - aws-ecr/ecr-login-for-secondary-account
+      - aws-ecr/ecr-login
       - aws-ecr/build-and-push-image:
           attach-workspace: true
           repo: <<parameters.repo>>
