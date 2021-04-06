@@ -92,7 +92,7 @@ jobs:
         default: ""
 
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202010-01
     steps:
       - aws-ecr/ecr-login-for-secondary-account
       - aws-ecr/build-and-push-image:
