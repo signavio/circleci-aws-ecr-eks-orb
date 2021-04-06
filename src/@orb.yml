@@ -94,14 +94,6 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
-      - run:
-          name: Install AWS CLI v1
-          command: |
-            curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-            unzip awscli-bundle.zip
-            sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-            which aws
-            aws --version
       - aws-ecr/ecr-login-for-secondary-account
       - aws-ecr/build-and-push-image:
           attach-workspace: true
