@@ -72,7 +72,7 @@ jobs:
         description: Name of the deployment to restart
         type: string
       additional_deployment_name:
-        description: Name of the additional deployment to restart
+        description: Name of the additional deployment to restarts (separated by comma)
         type: string
         default: ""
       k8s_namespace:
@@ -140,7 +140,11 @@ jobs:
 
             kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
             if [ "<<parameters.additional_deployment_name>>" ]; then
-              kubectl rollout restart deployment/<<parameters.additional_deployment_name>> -n <<parameters.k8s_namespace>>
+              IFS=', ' read -r -a array <<< "${<<parameters.additional_deployment_name>>}"
+              for additional_deployment in "${array[@]}"
+              do
+                kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
+              done              
             fi
 
 examples:
