@@ -140,7 +140,7 @@ jobs:
 
             kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
             if [ "<<parameters.additional_deployment_name>>" ]; then
-              IFS=', ' read -r -a array \<<< "${<<parameters.additional_deployment_name>>}"
+              IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
               for additional_deployment in "${array[@]}"
               do
                 kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
