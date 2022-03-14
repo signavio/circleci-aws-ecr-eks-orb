@@ -144,7 +144,7 @@ jobs:
               for additional_deployment in "${array[@]}"
               do
                 kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
-              done              
+              done
             fi
 
 examples:
