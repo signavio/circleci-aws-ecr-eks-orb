@@ -110,7 +110,7 @@ jobs:
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
 
-            sudo apt-get install jq
+            sudo apt-get update && sudo apt-get install -y jq
       - run:
           name: Restart deployment
           command: |
