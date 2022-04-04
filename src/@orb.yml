@@ -29,7 +29,8 @@ jobs:
       Uses circleci/aws-ecr to build and publish the docker images.
       Runs kubectl rollout restart deployment/NAME afterwards to refresh the latest tag on cluster.
     executor: <<parameters.executor>>
-
+    environment:
+      DOCKER_BUILDKIT: "1"
     parameters:
       executor:
         description: executor to use for this job
