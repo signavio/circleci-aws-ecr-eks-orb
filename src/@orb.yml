@@ -3,7 +3,7 @@ version: 2.1
 description: |
   Builds and pushes docker images using https://github.com/CircleCI-Public/aws-eks-orb
   Updates deployments on EKS clusters (e.g. qa/staging) that should always run on the latest image.
-  EKS cluster might be managed via CD tools e.g. argocd.
+  EKS cluster might be managed via CD tools, e.g. argocd.
   Support AWS Organization setups with multiple AWS accounts and EKS clusters by sts assume-role
   Source code: https://github.com/signavio/circleci-aws-ecr-eks-orb
 
