@@ -96,13 +96,14 @@ jobs:
       image: ubuntu-2004:202010-01
     steps:
       - aws-ecr/ecr-login
-      - aws-ecr/build-and-push-image:
+      - aws-ecr/build-image:
           attach-workspace: true
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
           extra-build-args: <<parameters.extra_build_args>>
+          push-image: true
       - run:
           name: "Install tools"
           command: |
