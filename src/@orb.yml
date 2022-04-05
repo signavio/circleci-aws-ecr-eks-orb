@@ -91,13 +91,29 @@ jobs:
         description: Additional arguments to pass to the Docker build step
         type: string
         default: ""
+      attach_workspace:
+        type: boolean
+        default: true
+        description: >
+          Boolean for whether or not to attach to an existing workspace. Default
+          is true.
+      workspace_root:
+        type: string
+        default: "."
+        description: >
+          Workspace root path that is either an absolute path or a path relative
+          to the working directory. Defaults to '.' (the working directory)
 
     machine:
       image: ubuntu-2004:202010-01
     steps:
+      - when:
+        condition: <<parameters.attach_workspace>>
+        steps:
+          - attach_workspace:
+              at: <<parameters.workspace_root>>
       - aws-ecr/ecr-login
       - aws-ecr/build-image:
-          attach-workspace: true
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           tag: <<parameters.tag>>
