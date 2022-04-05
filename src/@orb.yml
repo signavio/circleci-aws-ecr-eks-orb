@@ -108,10 +108,10 @@ jobs:
       image: ubuntu-2004:202010-01
     steps:
       - when:
-        condition: <<parameters.attach_workspace>>
-        steps:
-          - attach_workspace:
-              at: <<parameters.workspace_root>>
+          condition: <<parameters.attach_workspace>>
+          steps:
+            - attach_workspace:
+                at: <<parameters.workspace_root>>
       - aws-ecr/ecr-login
       - aws-ecr/build-image:
           repo: <<parameters.repo>>
