@@ -1,3 +1,5 @@
+[![REUSE status](https://api.reuse.software/badge/github.com/signavio/circleci-aws-ecr-eks-orb)](https://api.reuse.software/info/github.com/signavio/circleci-aws-ecr-eks-orb)
+
 # aws-ecr-argocd-orb
 
 CircleCi Orb to build and push to AWS ECR and deploy to EKS via kubectl rollout restart.
