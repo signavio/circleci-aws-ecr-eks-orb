@@ -117,15 +117,15 @@ jobs:
           steps:
             - attach_workspace:
                 at: <<parameters.workspace_root>>
-      - aws-ecr/ecr-login
-      - aws-ecr/build-image:
+      - aws-ecr/ecr_login
+      - aws-ecr/build_image:
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
-          extra-build-args: <<parameters.extra_build_args>>
+          extra_build_args: <<parameters.extra_build_args>>
           platform: <<parameters.platform>>
-          push-image: true
+          push_image: true
       - run:
           name: "Install tools"
           command: |
