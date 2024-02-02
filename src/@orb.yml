@@ -103,6 +103,11 @@ jobs:
         description: >
           Workspace root path that is either an absolute path or a path relative
           to the working directory. Defaults to '.' (the working directory)
+      platform:
+        type: string
+        default: "linux/amd64"
+        description: > 
+          String to specify the architecture of the base image
 
     machine:
       image: ubuntu-2004:202010-01
@@ -119,6 +124,7 @@ jobs:
           tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
           extra-build-args: <<parameters.extra_build_args>>
+          platform: <<parameters.platform>>
           push-image: true
       - run:
           name: "Install tools"
