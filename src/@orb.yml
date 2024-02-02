@@ -117,7 +117,8 @@ jobs:
           steps:
             - attach_workspace:
                 at: <<parameters.workspace_root>>
-      - aws-ecr/ecr_login
+      - aws-ecr/ecr_login:
+          profile_name: global_res
       - aws-ecr/build_image:
           repo: <<parameters.repo>>
           path: <<parameters.path>>
