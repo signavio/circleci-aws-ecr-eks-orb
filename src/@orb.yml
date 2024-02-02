@@ -120,6 +120,7 @@ jobs:
       - aws-ecr/ecr_login:
           profile_name: global_res
       - aws-ecr/build_image:
+          profile_name: global_res
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           tag: <<parameters.tag>>
