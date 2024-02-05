@@ -19,7 +19,7 @@ executors:
     parameters:
       image:
         type: string
-        default: ubuntu-2004:202010-01
+        default: ubuntu-2204:current
 
     machine:
       image: <<parameters.image>>
@@ -111,7 +111,7 @@ jobs:
           String to specify the architecture of the base image
 
     machine:
-      image: ubuntu-2004:202010-01
+      image: ubuntu-2204:current
     steps:
       - when:
           condition: <<parameters.attach_workspace>>
