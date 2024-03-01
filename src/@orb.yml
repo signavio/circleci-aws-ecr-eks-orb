@@ -85,7 +85,11 @@ jobs:
         type: string
         default: Dockerfile
       path:
-        description: Path to the directory containing your Dockerfile and build context.
+        description: Path to the directory containing your Dockerfile.
+        type: string
+        default: .
+      build_path:
+        description: Path to the directory containing your build context.
         type: string
         default: .
       extra_build_args:
@@ -126,6 +130,7 @@ jobs:
           profile_name: global_res
           repo: <<parameters.repo>>
           path: <<parameters.path>>
+          build_path: <<parameters.build_path>>
           tag: <<parameters.tag>>
           dockerfile: <<parameters.dockerfile>>
           extra_build_args: <<parameters.extra_build_args>>
