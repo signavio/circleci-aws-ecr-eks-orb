@@ -43,30 +43,6 @@ jobs:
           (defaults to latest,${CIRCLE_SHA1})
         type: string
         default: "latest,${CIRCLE_SHA1}"
-      eks_account_id:
-        description: |
-          Env var of the account id of the EKS cluster containing the deployment
-          (default EKS_ACCOUNT_ID)
-        type: env_var_name
-        default: EKS_ACCOUNT_ID
-      role_in_target_account:
-        description: |
-          Env var of the name of the role to be assumed to update the kubeconfig
-          (defaults to ASSUME_ROLE)
-        type: env_var_name
-        default: ASSUME_ROLE
-      aws_region:
-        description: |
-          Env var of AWS region to operate in
-          (defaults to AWS_REGION)
-        type: env_var_name
-        default: AWS_REGION
-      eks_cluster_name:
-        description: |
-          Env var of EKS cluster name
-          (defaults to EKS_NAME)
-        type: env_var_name
-        default: EKS_NAME
       dockerfile:
         description: Dockerfile name
         type: string
@@ -121,7 +97,6 @@ jobs:
           dockerfile: <<parameters.dockerfile>>
           extra_build_args: <<parameters.extra_build_args>>
           platform: <<parameters.platform>>
-
   build-push-restart:
     description: >
       Uses circleci/aws-ecr to build and publish the docker images.
@@ -131,6 +106,30 @@ jobs:
       DOCKER_BUILDKIT: "1"
     parameters:
       <<: *build-push-parameters
+      eks_account_id:
+        description: |
+          Env var of the account id of the EKS cluster containing the deployment
+          (default EKS_ACCOUNT_ID)
+        type: env_var_name
+        default: EKS_ACCOUNT_ID
+      role_in_target_account:
+        description: |
+          Env var of the name of the role to be assumed to update the kubeconfig
+          (defaults to ASSUME_ROLE)
+        type: env_var_name
+        default: ASSUME_ROLE
+      aws_region:
+        description: |
+          Env var of AWS region to operate in
+          (defaults to AWS_REGION)
+        type: env_var_name
+        default: AWS_REGION
+      eks_cluster_name:
+        description: |
+          Env var of EKS cluster name
+          (defaults to EKS_NAME)
+        type: env_var_name
+        default: EKS_NAME
       deployment_name:
         description: Name of the deployment to restart
         type: string
