@@ -217,8 +217,8 @@ examples:
         version: 2
         aws-ecr-eks:
           jobs:
-            - build-push-restart:
-                context: ecr
+            - build-push:
+                context: ECR
                 repo: myecrrepo
 
   build-push-restart-staging:
@@ -232,6 +232,6 @@ examples:
         aws-ecr-eks:
           jobs:
             - build-push-restart:
-                context: ecr
+                context: ECR
                 repo: myecrrepo
                 deployment_name: mydeployment
