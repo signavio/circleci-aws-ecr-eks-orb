@@ -173,9 +173,10 @@ jobs:
       - run:
           name: Restart deployment
           command: |
-            tokenResponse=$(aws sts assume-role \
+            tokenResponse=$(aws sts assume-role-with-web-identity \
             --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
-            --role-session-name AWSCLI-Session)
+            --role-session-name "web-identity-role-session" \
+            --web-identity-token "${CIRCLE_OIDC_TOKEN}" )
 
             aws configure set aws_access_key_id \
             $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
