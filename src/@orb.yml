@@ -163,14 +163,7 @@ jobs:
               PROFILE: global_res
               DEFAULT_REGION: << parameters.default_region >>
             command: |
-              temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}" ${AWS_ENDPOINT})
-              key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
-              access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
-              session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
-              aws configure set aws_access_key_id "${key_id}" --profile "${PROFILE}"
-              aws configure set aws_secret_access_key "${access_key}" --profile "${PROFILE}"
-              aws configure set aws_session_token "${session_token}" --profile "${PROFILE}"
-              aws configure set region "${DEFAULT_REGION}" --profile "${PROFILE}"
+              echo "test"
       - aws-cli/setup:
           profile_name: global_res
       - aws-ecr/ecr_login:
