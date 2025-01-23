@@ -153,15 +153,15 @@ jobs:
       image: ubuntu-2204:current
     steps:
       - when:
-        condition: << parameters.assume_role_with_web_identity_enabled >>
-        steps:
-          - run:
-              name: Assume Role with Web Identity
-              environment:
-                ROLE_NAME: << parameters.role >>
-                ACCOUNT_ID: << parameters.account_id >>
-                PROFILE: global_res
-                DEFAULT_REGION: << parameters.default_region >>
+          condition: << parameters.assume_role_with_web_identity_enabled >>
+          steps:
+            - run:
+                name: Assume Role with Web Identity
+                environment:
+                  ROLE_NAME: << parameters.role >>
+                  ACCOUNT_ID: << parameters.account_id >>
+                  PROFILE: global_res
+                  DEFAULT_REGION: << parameters.default_region >>
       - aws-cli/setup:
           profile_name: global_res
       - aws-ecr/ecr_login:
