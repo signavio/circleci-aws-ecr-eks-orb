@@ -149,6 +149,9 @@ jobs:
       default_region:
         description: default deployment region
         type: string
+      assume_role_with_web_identity_enabled:
+        description: flag to enable/disable oidc
+        type: string
     machine:
       image: ubuntu-2204:current
     steps:
@@ -162,6 +165,8 @@ jobs:
                   ACCOUNT_ID: << parameters.account_id >>
                   PROFILE: global_res
                   DEFAULT_REGION: << parameters.default_region >>
+                command: |
+                  echo "test"
       - aws-cli/setup:
           profile_name: global_res
       - aws-ecr/ecr_login:
