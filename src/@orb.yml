@@ -151,7 +151,7 @@ jobs:
         type: string
       assume_role_with_web_identity_enabled:
         description: flag to enable/disable oidc
-        type: string
+        type: boolean
     machine:
       image: ubuntu-2204:current
     steps:
