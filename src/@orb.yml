@@ -167,6 +167,7 @@ jobs:
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
+                  circleci env subst
                   AWS_CLI_STR_PROFILE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
                   echo "${AWS_CLI_STR_PROFILE_NAME}"
                   temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${ROLE_NAME}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
@@ -174,23 +175,23 @@ jobs:
                   access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
                   aws configure set aws_access_key_id "${key_id}" --profile "${AWS_CLI_STR_PROFILE_NAME}"
-                  aws configure set aws_secret_access_key "${access_key}" --profile "${AWS_CLI_STR_PROFILE_NAME}"
-                  aws configure set aws_session_token "${session_token}" --profile "${AWS_CLI_STR_PROFILE_NAME}"
-                  aws configure set region "${DEFAULT_REGION}" --profile "${AWS_CLI_STR_PROFILE_NAME}"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "oidc-session"
+                  aws configure set aws_session_token "${session_token}" --profile "oidc-session"
+                  aws configure set region "${DEFAULT_REGION}" --profile "oidc-session"
                   echo "OIDC session established"
 
 
       - aws-cli/setup:
-          profile_name: global_res
+          profile_name: oidc-session
       - aws-ecr/ecr_login:
-          profile_name: global_res
+          profile_name: oidc-session
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
           workspace_root: <<parameters.workspace_root>>
           auth:
             - aws-cli/setup:
-                profile_name: global_res
-          profile_name: global_res
+                profile_name: oidc-session
+          profile_name: oidc-session
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           build_path: <<parameters.build_path>>
