@@ -166,7 +166,7 @@ jobs:
                   PROFILE: global_res
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
-                  echo "test"
+                  echo "todo: cross account session here"
       - aws-cli/setup:
           profile_name: global_res
       - aws-ecr/ecr_login:
