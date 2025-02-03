@@ -191,6 +191,7 @@ jobs:
           profile_name: oidc
       - aws-ecr/ecr_login:
           profile_name: oidc
+          account_id: AWS_ECR_REPO_ACCOUNT_ID
 
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
