@@ -183,10 +183,10 @@ jobs:
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
+                  echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc"
                   source $BASH_ENV
                   echo "OIDC session established"
                   # echo $temp_role
-
 
       - aws-cli/setup:
           profile_name: oidc
