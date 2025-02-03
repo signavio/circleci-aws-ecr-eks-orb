@@ -174,12 +174,12 @@ jobs:
                   key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
-                  aws configure set aws_access_key_id "${key_id}" --profile "${AWS_CLI_STR_PROFILE_NAME}"
+                  aws configure set aws_access_key_id "${key_id}" --profile "oidc-session"
                   aws configure set aws_secret_access_key "${access_key}" --profile "oidc-session"
                   aws configure set aws_session_token "${session_token}" --profile "oidc-session"
                   aws configure set region "${DEFAULT_REGION}" --profile "oidc-session"
                   echo "OIDC session established"
-                  echo $temp_role
+                  # echo $temp_role
 
 
       - aws-cli/setup:
