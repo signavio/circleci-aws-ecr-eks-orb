@@ -97,188 +97,188 @@ jobs:
           dockerfile: <<parameters.dockerfile>>
           extra_build_args: <<parameters.extra_build_args>>
           platform: <<parameters.platform>>
-  build-push-restart:
-    description: >
-      Uses circleci/aws-ecr to build and publish the docker images.
-      Runs kubectl rollout restart deployment/NAME afterwards to refresh the latest tag on cluster.
-    executor: <<parameters.executor>>
-    environment:
-      DOCKER_BUILDKIT: "1"
-    parameters:
-      <<: *build-push-parameters
-      eks_account_id:
-        description: |
-          Env var of the account id of the EKS cluster containing the deployment
-          (default EKS_ACCOUNT_ID)
-        type: env_var_name
-        default: EKS_ACCOUNT_ID
-      role_in_target_account:
-        description: |
-          Env var of the name of the role to be assumed to update the kubeconfig
-          (defaults to ASSUME_ROLE)
-        type: env_var_name
-        default: ASSUME_ROLE
-      aws_region:
-        description: |
-          Env var of AWS region to operate in
-          (defaults to AWS_REGION)
-        type: env_var_name
-        default: AWS_REGION
-      eks_cluster_name:
-        description: |
-          Env var of EKS cluster name
-          (defaults to EKS_NAME)
-        type: env_var_name
-        default: EKS_NAME
-      deployment_name:
-        description: Name of the deployment to restart
-        type: string
-      additional_deployment_name:
-        description: Name of the additional deployment to restarts (separated by comma)
-        type: string
-        default: ""
-      k8s_namespace:
-        description: Kubernetes namespace the deployment is located in
-        type: string
-      role:
-        description: The role to be assumed to establish the central account
-        type: string
-      account_id:
-        description: Accound id of the Deployment/central account
-        type: string
-      default_region:
-        description: default deployment region
-        type: string
-      assume_role_with_web_identity_enabled:
-        description: flag to enable/disable oidc
-        type: boolean
-    machine:
-      image: ubuntu-2204:current
-    steps:
-      - when:
-          condition: << parameters.assume_role_with_web_identity_enabled >>
-          steps:
-            - run:
-                name: Assume Role with Web Identity
-                environment:
-                  ROLE_NAME: << parameters.role >>
-                  ACCOUNT_ID: << parameters.account_id >>
-                  PROFILE: global_res
-                  DEFAULT_REGION: << parameters.default_region >>
-                command: |
-                  echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
-                  circleci env subst
-                  AWS_CLI_STR_PROFILE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
-                  echo "${AWS_CLI_STR_PROFILE_NAME}"
-                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${ROLE_NAME}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
-                  key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
-                  access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
-                  session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
-                  # aws configure set aws_access_key_id "${key_id}" --profile "oidc"
-                  # aws configure set aws_secret_access_key "${access_key}" --profile "oidc"
-                  # aws configure set aws_session_token "${session_token}" --profile "oidc"
-                  # aws configure set region "${DEFAULT_REGION}" --profile "oidc"
-                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
-                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
-                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
-                  echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
-                  source $BASH_ENV
-                  echo "OIDC session established"
-                  # echo $temp_role
+#   build-push-restart:
+#     description: >
+#       Uses circleci/aws-ecr to build and publish the docker images.
+#       Runs kubectl rollout restart deployment/NAME afterwards to refresh the latest tag on cluster.
+#     executor: <<parameters.executor>>
+#     environment:
+#       DOCKER_BUILDKIT: "1"
+#     parameters:
+#       <<: *build-push-parameters
+#       eks_account_id:
+#         description: |
+#           Env var of the account id of the EKS cluster containing the deployment
+#           (default EKS_ACCOUNT_ID)
+#         type: env_var_name
+#         default: EKS_ACCOUNT_ID
+#       role_in_target_account:
+#         description: |
+#           Env var of the name of the role to be assumed to update the kubeconfig
+#           (defaults to ASSUME_ROLE)
+#         type: env_var_name
+#         default: ASSUME_ROLE
+#       aws_region:
+#         description: |
+#           Env var of AWS region to operate in
+#           (defaults to AWS_REGION)
+#         type: env_var_name
+#         default: AWS_REGION
+#       eks_cluster_name:
+#         description: |
+#           Env var of EKS cluster name
+#           (defaults to EKS_NAME)
+#         type: env_var_name
+#         default: EKS_NAME
+#       deployment_name:
+#         description: Name of the deployment to restart
+#         type: string
+#       additional_deployment_name:
+#         description: Name of the additional deployment to restarts (separated by comma)
+#         type: string
+#         default: ""
+#       k8s_namespace:
+#         description: Kubernetes namespace the deployment is located in
+#         type: string
+#       role:
+#         description: The role to be assumed to establish the central account
+#         type: string
+#       account_id:
+#         description: Accound id of the Deployment/central account
+#         type: string
+#       default_region:
+#         description: default deployment region
+#         type: string
+#       assume_role_with_web_identity_enabled:
+#         description: flag to enable/disable oidc
+#         type: boolean
+#     machine:
+#       image: ubuntu-2204:current
+#     steps:
+#       - when:
+#           condition: << parameters.assume_role_with_web_identity_enabled >>
+#           steps:
+#             - run:
+#                 name: Assume Role with Web Identity
+#                 environment:
+#                   ROLE_NAME: << parameters.role >>
+#                   ACCOUNT_ID: << parameters.account_id >>
+#                   PROFILE: oidc
+#                   DEFAULT_REGION: << parameters.default_region >>
+#                 command: |
+#                   echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
+#                   circleci env subst
+#                   AWS_CLI_STR_PROFILE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
+#                   echo "${AWS_CLI_STR_PROFILE_NAME}"
+#                   temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${ROLE_NAME}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
+#                   key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
+#                   access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
+#                   session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
+#                   # aws configure set aws_access_key_id "${key_id}" --profile "oidc"
+#                   # aws configure set aws_secret_access_key "${access_key}" --profile "oidc"
+#                   # aws configure set aws_session_token "${session_token}" --profile "oidc"
+#                   # aws configure set region "${DEFAULT_REGION}" --profile "oidc"
+#                   echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+#                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+#                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+#                   echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
+#                   source $BASH_ENV
+#                   echo "OIDC session established"
+#                   # echo $temp_role
 
 
-      - aws-cli/setup:
-          profile_name: oidc
-      - aws-ecr/ecr_login:
-          profile_name: oidc
-          account_id: AWS_ECR_REPO_ACCOUNT_ID
-          use_credentials_helper: false
+#       - aws-cli/setup:
+#           profile_name: oidc
+#       - aws-ecr/ecr_login:
+#           profile_name: oidc
+#           account_id: AWS_ECR_REPO_ACCOUNT_ID
+#           use_credentials_helper: false
 
-      - aws-ecr/build_and_push_image:
-          attach_workspace: <<parameters.attach_workspace>>
-          workspace_root: <<parameters.workspace_root>>
-          auth:
-            - aws-cli/setup:
-                profile_name: oidc
-          profile_name: oidc
-          repo: <<parameters.repo>>
-          path: <<parameters.path>>
-          build_path: <<parameters.build_path>>
-          tag: <<parameters.tag>>
-          dockerfile: <<parameters.dockerfile>>
-          extra_build_args: <<parameters.extra_build_args>>
-          platform: <<parameters.platform>>
-      - run:
-          name: "Install tools"
-          command: |
-            # sudo wget -O kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
-            sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
-            sudo chmod +x ./kubectl
-            sudo cp ./kubectl /bin/kubectl
+#       - aws-ecr/build_and_push_image:
+#           attach_workspace: <<parameters.attach_workspace>>
+#           workspace_root: <<parameters.workspace_root>>
+#           auth:
+#             - aws-cli/setup:
+#                 profile_name: oidc
+#           profile_name: oidc
+#           repo: <<parameters.repo>>
+#           path: <<parameters.path>>
+#           build_path: <<parameters.build_path>>
+#           tag: <<parameters.tag>>
+#           dockerfile: <<parameters.dockerfile>>
+#           extra_build_args: <<parameters.extra_build_args>>
+#           platform: <<parameters.platform>>
+#       - run:
+#           name: "Install tools"
+#           command: |
+#             # sudo wget -O kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
+#             sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
+#             sudo chmod +x ./kubectl
+#             sudo cp ./kubectl /bin/kubectl
 
-            sudo apt-get update && sudo apt-get install -y jq
-      - run:
-          name: Restart deployment
-          command: |
-            tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
-            --role-session-name AWSCLI-Session)
+#             sudo apt-get update && sudo apt-get install -y jq
+#       - run:
+#           name: Restart deployment
+#           command: |
+#             tokenResponse=$(aws sts assume-role \
+#             --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
+#             --role-session-name AWSCLI-Session)
 
-            aws configure set aws_access_key_id \
-            $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-            --profile kubectl
+#             aws configure set aws_access_key_id \
+#             $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+#             --profile kubectl
 
-            aws configure set aws_secret_access_key \
-            $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-            --profile kubectl
+#             aws configure set aws_secret_access_key \
+#             $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+#             --profile kubectl
 
-            aws configure set aws_session_token \
-            $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-            --profile kubectl
+#             aws configure set aws_session_token \
+#             $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+#             --profile kubectl
 
-            aws --profile kubectl --region $<<parameters.aws_region>> \
-              eks update-kubeconfig \
-              --name $<<parameters.eks_cluster_name>> \
-              --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
+#             aws --profile kubectl --region $<<parameters.aws_region>> \
+#               eks update-kubeconfig \
+#               --name $<<parameters.eks_cluster_name>> \
+#               --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
 
-            echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
-            source $BASH_ENV
+#             echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+#             source $BASH_ENV
 
-            kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
-            if [ "<<parameters.additional_deployment_name>>" ]; then
-              IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
-              for additional_deployment in "${array[@]}"
-              do
-                kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
-              done
-            fi
+#             kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
+#             if [ "<<parameters.additional_deployment_name>>" ]; then
+#               IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
+#               for additional_deployment in "${array[@]}"
+#               do
+#                 kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
+#               done
+#             fi
 
-examples:
-  build-push-staging:
-    description:
-    usage:
-      version: 2.1
-      orbs:
-        aws-ecr-eks: signavio/aws-ecr-eks@x.y
-      workflows:
-        version: 2
-        aws-ecr-eks:
-          jobs:
-            - build-push:
-                context: ECR
-                repo: myecrrepo
+# examples:
+#   build-push-staging:
+#     description:
+#     usage:
+#       version: 2.1
+#       orbs:
+#         aws-ecr-eks: signavio/aws-ecr-eks@x.y
+#       workflows:
+#         version: 2
+#         aws-ecr-eks:
+#           jobs:
+#             - build-push:
+#                 context: ECR
+#                 repo: myecrrepo
 
-  build-push-restart-staging:
-    description:
-    usage:
-      version: 2.1
-      orbs:
-        aws-ecr-eks: signavio/aws-ecr-eks@x.y
-      workflows:
-        version: 2
-        aws-ecr-eks:
-          jobs:
-            - build-push-restart:
-                context: ECR
-                repo: myecrrepo
-                deployment_name: mydeployment
+#   build-push-restart-staging:
+#     description:
+#     usage:
+#       version: 2.1
+#       orbs:
+#         aws-ecr-eks: signavio/aws-ecr-eks@x.y
+#       workflows:
+#         version: 2
+#         aws-ecr-eks:
+#           jobs:
+#             - build-push-restart:
+#                 context: ECR
+#                 repo: myecrrepo
+#                 deployment_name: mydeployment
