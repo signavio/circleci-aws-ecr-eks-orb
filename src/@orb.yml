@@ -179,12 +179,14 @@ jobs:
                   aws configure set aws_session_token "${session_token}" --profile "oidc-session"
                   aws configure set region "${DEFAULT_REGION}" --profile "oidc-session"
                   echo "OIDC session established"
+                  echo $temp_role
 
 
       - aws-cli/setup:
           profile_name: oidc-session
       - aws-ecr/ecr_login:
           profile_name: oidc-session
+
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
           workspace_root: <<parameters.workspace_root>>
