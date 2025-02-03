@@ -174,26 +174,26 @@ jobs:
                   key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
-                  aws configure set aws_access_key_id "${key_id}" --profile "oidc-session"
-                  aws configure set aws_secret_access_key "${access_key}" --profile "oidc-session"
-                  aws configure set aws_session_token "${session_token}" --profile "oidc-session"
-                  aws configure set region "${DEFAULT_REGION}" --profile "oidc-session"
+                  aws configure set aws_access_key_id "${key_id}" --profile "oidc"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "oidc"
+                  aws configure set aws_session_token "${session_token}" --profile "oidc"
+                  aws configure set region "${DEFAULT_REGION}" --profile "oidc"
                   echo "OIDC session established"
                   # echo $temp_role
 
 
       - aws-cli/setup:
-          profile_name: oidc-session
+          profile_name: oidc
       - aws-ecr/ecr_login:
-          profile_name: oidc-session
+          profile_name: oidc
 
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
           workspace_root: <<parameters.workspace_root>>
           auth:
             - aws-cli/setup:
-                profile_name: oidc-session
-          profile_name: oidc-session
+                profile_name: oidc
+          profile_name: oidc
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           build_path: <<parameters.build_path>>
