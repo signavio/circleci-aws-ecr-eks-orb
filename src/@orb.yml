@@ -191,8 +191,9 @@ jobs:
           profile_name: oidc
       - aws-ecr/ecr_login:
           profile_name: oidc
-          account_id: AWS_ECR_REPO_ACCOUNT_ID
+          account_id: <<parameters.eks_account_id>>
           use_credentials_helper: false
+          default_region: <<parameters.default_region>>
 
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
