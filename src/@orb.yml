@@ -205,7 +205,7 @@ jobs:
             echo "ECR Cross Account Login called"
             tokenResponse=$(aws sts assume-role \
             --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.target_role>> \
-            --role-session-name AWSCLI-Session --profile 'oidc')
+            --role-session-name AWSCLI-Session --profile 'oidc' --debug)
             echo $tokenResponse
       - aws-ecr/ecr_login:
           profile_name: oidc
