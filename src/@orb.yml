@@ -144,6 +144,9 @@ jobs:
       role:
         description: The role to be assumed to establish the central account
         type: string
+      target_role:
+        description: roll to be used for the cross account ecr connection
+        type: string
       account_id:
         description: Accound id of the Deployment/central account
         type: string
@@ -163,6 +166,7 @@ jobs:
                 name: Assume Role with Web Identity
                 environment:
                   ROLE_NAME: << parameters.role >>
+                  TARGET_ROLE_NAME: << parameters.target_role >>
                   ACCOUNT_ID: << parameters.account_id >>
                   PROFILE: oidc
                   DEFAULT_REGION: << parameters.default_region >>
@@ -199,6 +203,10 @@ jobs:
           name: ECR Cross Account Login
           command: |
             echo "ECR Cross Account Login called"
+            tokenResponse=$(aws sts assume-role \
+            --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.target_role>> \
+            --role-session-name AWSCLI-Session --profile 'oidc')
+            echo $tokenResponse
       - aws-ecr/ecr_login:
           profile_name: oidc
           account_id: <<parameters.eks_account_id>>
