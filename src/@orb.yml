@@ -195,15 +195,14 @@ jobs:
 
       - aws-cli/setup:
           profile_name: oidc
-      # - aws-ecr/ecr_login:
-      #     profile_name: oidc
-      #     account_id: <<parameters.eks_account_id>>
       - run:
           name: ECR Cross Account Login
-          when: << parameters.assume_role_with_web_identity_enabled >>
           command: |
             echo "ECR Cross Account Login called"
-
+      - aws-ecr/ecr_login:
+          profile_name: oidc
+          account_id: <<parameters.eks_account_id>>
+          use_credentials_helper: false
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
           workspace_root: <<parameters.workspace_root>>
