@@ -195,10 +195,9 @@ jobs:
 
       - aws-cli/setup:
           profile_name: oidc
-      - aws-ecr/ecr_login:
-          profile_name: oidc
-          account_id: <<parameters.eks_account_id>>
-          use_credentials_helper: false
+      # - aws-ecr/ecr_login:
+      #     profile_name: oidc
+      #     account_id: <<parameters.eks_account_id>>
 
       - aws-ecr/build_and_push_image:
           attach_workspace: <<parameters.attach_workspace>>
