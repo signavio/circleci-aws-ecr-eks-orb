@@ -207,10 +207,10 @@ jobs:
             echo "ECR Cross Account Login called"
             cat ~/.aws/credentials
             echo $AWS_PROFILE
-            echo $<<parameters.eks_account_id>>
-            echo $<<parameters.target_role>>
+            echo $TARGET_ACCOUNT_ID
+            echo $TARGET_ROLE_NAME
             tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::${TARGET_ACCOUNT_ID}:role/${TARGET_ROLE_NAME} \
+            --role-arn arn:aws:iam::$TARGET_ACCOUNT_ID:role/$TARGET_ROLE_NAME \
             --role-session-name AWSCLI-Session --profile oidc --debug)
             echo $tokenResponse
       - aws-ecr/ecr_login:
