@@ -211,9 +211,9 @@ jobs:
             echo "ECR Cross Account Login called"
             cat ~/.aws/credentials
             echo $AWS_PROFILE
-            echo $TARGET_ACCOUNT_ID
-            TARGET_ROLE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
             echo $TARGET_ROLE_NAME
+            TARGET_ACCOUNT_ID="$(echo $TARGET_ACCOUNT_ID)"
+            echo $TARGET_ACCOUNT_ID
             tokenResponse=$(aws sts assume-role \
             --role-arn arn:aws:iam::$TARGET_ACCOUNT_ID:role/$TARGET_ROLE_NAME \
             --role-session-name AWSCLI-Session --profile oidc --debug)
