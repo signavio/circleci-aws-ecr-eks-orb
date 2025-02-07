@@ -189,8 +189,8 @@ jobs:
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
-                  echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'" >> $BASH_ENV
-                  echo "export AWS_PROFILE='oidc'" >> $BASH_ENV
+                  echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'"
+                  echo "export AWS_PROFILE='oidc'"
                   source $BASH_ENV
                   cat "$BASH_ENV"
                   echo $AWS_SESSION_TOKEN
@@ -211,12 +211,12 @@ jobs:
             printenv
             echo $AWS_PROFILE
             echo $TARGET_ROLE_NAME
-            TARGET_ACCOUNT_ID=$(eval "printf %s \$$AWS_ECR_REPO_ACCOUNT_ID_TEST")
-            echo $TARGET_ACCOUNT_ID
-            eval "echo \$$AWS_ECR_REPO_ACCOUNT_ID_TEST"
+            AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
+            AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
+            AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
             tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::123267268596:role/$TARGET_ROLE_NAME \
-            --role-session-name AWSCLI-Session --profile oidc --debug)
+            --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
+            --role-session-name AWSCLI-Session-cross --profile oidc --debug)
             echo $tokenResponse
       - aws-ecr/ecr_login:
           profile_name: oidc
