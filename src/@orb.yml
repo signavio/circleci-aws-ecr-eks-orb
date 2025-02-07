@@ -215,7 +215,7 @@ jobs:
             echo $TARGET_ACCOUNT_ID
             eval "echo \$$AWS_ECR_REPO_ACCOUNT_ID_TEST"
             tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::$(eval "printf %s \$$AWS_ECR_REPO_ACCOUNT_ID_TEST"):role/$TARGET_ROLE_NAME \
+            --role-arn arn:aws:iam::123267268596:role/$TARGET_ROLE_NAME \
             --role-session-name AWSCLI-Session --profile oidc --debug)
             echo $tokenResponse
       - aws-ecr/ecr_login:
