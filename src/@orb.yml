@@ -193,6 +193,7 @@ jobs:
                   echo "export AWS_PROFILE='oidc'"
                   source $BASH_ENV
                   cat "$BASH_ENV"
+                  echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
 
       - aws-cli/setup:
@@ -205,6 +206,7 @@ jobs:
             DEFAULT_REGION: << parameters.default_region >>
           command: |
             echo "ECR Cross Account Login called"
+            echo $AWS_SESSION_TOKEN
             cat ~/.aws/credentials
             echo $BASH_ENV
             echo $AWS_PROFILE
