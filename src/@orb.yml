@@ -192,7 +192,7 @@ jobs:
                   echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'"
                   echo "export AWS_PROFILE='oidc'"
                   source $BASH_ENV
-                  echo $BASH_ENV
+                  cat "$BASH_ENV"
                   echo "OIDC session established"
 
       - aws-cli/setup:
