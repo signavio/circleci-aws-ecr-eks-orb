@@ -206,6 +206,7 @@ jobs:
           command: |
             echo "ECR Cross Account Login called"
             cat ~/.aws/credentials
+            echo $BASH_ENV
             echo $AWS_PROFILE
             echo $TARGET_ROLE_NAME
             TARGET_ACCOUNT_ID="$(echo $TARGET_ACCOUNT_ID)"
