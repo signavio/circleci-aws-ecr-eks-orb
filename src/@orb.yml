@@ -214,8 +214,11 @@ jobs:
             AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
             AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
             AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
-            aws configure --profile oidc
-            aws configure set aws_session_token $AWS_SESSION_TOKEN
+            AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
+            aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile oidc
+            aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile oidc
+            aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile oidc
+            aws configure set region "${AWS_REGION}" --profile oidc
             tokenResponse=$(aws sts assume-role \
             --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
             --role-session-name AWSCLI-Session-cross --profile oidc --debug)
