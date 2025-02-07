@@ -211,7 +211,7 @@ jobs:
             printenv
             echo $AWS_PROFILE
             echo $TARGET_ROLE_NAME
-            TARGET_ACCOUNT_ID=$(eval "echo \$$AWS_ECR_REPO_ACCOUNT_ID_TEST")
+            TARGET_ACCOUNT_ID="${!AWS_ECR_REPO_ACCOUNT_ID_TEST}"
             echo $TARGET_ACCOUNT_ID
             eval "echo \$$AWS_ECR_REPO_ACCOUNT_ID"
             tokenResponse=$(aws sts assume-role \
