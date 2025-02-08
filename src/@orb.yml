@@ -196,10 +196,10 @@ jobs:
             condition:
               - and:
                   - equal: [ false, << pipeline.parameters.assume_role_with_web_identity_enabled >> ]
-          steps:
-            - run:
-                name: Bypassing OIDC session
-                command: <<include(scripts/non-oidc-session.sh)>>
+            steps:
+              - run:
+                  name: Bypassing OIDC session
+                  command: <<include(scripts/non-oidc-session.sh)>>
       - aws-cli/setup:
           profile_name: oidc
       # - run:
