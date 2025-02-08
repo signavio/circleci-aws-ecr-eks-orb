@@ -194,7 +194,8 @@ jobs:
                   echo "OIDC session established"
       - when:
             condition:
-              - not: << pipeline.parameters.assume_role_with_web_identity_enabled >>
+              - and:
+                  - equal: [ false, << pipeline.parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - run:
                 name: Bypassing OIDC session
