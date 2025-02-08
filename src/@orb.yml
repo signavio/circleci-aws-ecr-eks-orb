@@ -193,7 +193,9 @@ jobs:
                   echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
       - when:
-          condition: not: << pipeline.parameters.assume_role_with_web_identity_enabled >>
+          and:
+            - not:
+                equal: [ false, << pipeline.parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - run:
                 name: Bypassing OIDC session
