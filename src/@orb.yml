@@ -191,37 +191,43 @@ jobs:
                   cat "$BASH_ENV"
                   echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
-
+      - when:
+          condition:
+            - equal: [ false, << pipeline.parameters.assume_role_with_web_identity_enabled >> ]
+          steps:
+            - run:
+                name: Bypassing OIDC session
+                command: <<include(scripts/non-oidc-session.sh)>>
       - aws-cli/setup:
           profile_name: oidc
-      - run:
-          name: ECR Cross Account Login
-          environment:
-            TARGET_ROLE_NAME: << parameters.target_role >>
-            TARGET_ACCOUNT_ID: $<< parameters.eks_account_id >>
-            DEFAULT_REGION: << parameters.default_region >>
-          command: |
-            echo "ECR Cross Account Login called"
-            echo $AWS_SESSION_TOKEN
-            cat ~/.aws/credentials
-            printenv
-            echo $AWS_PROFILE
-            echo $TARGET_ROLE_NAME
-            AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
-            AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
-            AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
-            AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
-            aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile oidc
-            aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile oidc
-            aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile oidc
-            aws configure set region "${AWS_REGION}" --profile oidc
-            tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
-            --role-session-name AWSCLI-Session-cross --profile oidc --debug)
-            echo $tokenResponse
+      # - run:
+      #     name: ECR Cross Account Login
+      #     environment:
+      #       TARGET_ROLE_NAME: << parameters.target_role >>
+      #       TARGET_ACCOUNT_ID: $<< parameters.eks_account_id >>
+      #       DEFAULT_REGION: << parameters.default_region >>
+      #     command: |
+      #       echo "ECR Cross Account Login called"
+      #       echo $AWS_SESSION_TOKEN
+      #       cat ~/.aws/credentials
+      #       printenv
+      #       echo $AWS_PROFILE
+      #       echo $TARGET_ROLE_NAME
+      #       AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
+      #       AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
+      #       AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
+      #       AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
+      #       aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile oidc
+      #       aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile oidc
+      #       aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile oidc
+      #       aws configure set region "${AWS_REGION}" --profile oidc
+      #       tokenResponse=$(aws sts assume-role \
+      #       --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
+      #       --role-session-name AWSCLI-Session-cross --profile oidc --debug)
+      #       echo $tokenResponse
       - aws-ecr/ecr_login:
           profile_name: oidc
-          account_id: $<<parameters.eks_account_id>>
+          # account_id: $<<parameters.eks_account_id>>
           use_credentials_helper: false
       - aws-ecr/build_and_push_image:
           account_id: $<<parameters.eks_account_id>>
