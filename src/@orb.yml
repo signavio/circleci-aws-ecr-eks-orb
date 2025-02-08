@@ -97,7 +97,7 @@ jobs:
           dockerfile: <<parameters.dockerfile>>
           extra_build_args: <<parameters.extra_build_args>>
           platform: <<parameters.platform>>
-#-----
+  #-----
   build-push-restart:
     description: >
       Uses circleci/aws-ecr to build and publish the docker images.
@@ -193,13 +193,17 @@ jobs:
                   echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
       - when:
-            condition:
-              - and:
-                  - equal: [ false, << pipeline.parameters.assume_role_with_web_identity_enabled >> ]
-            steps:
-              - run:
-                  name: Bypassing OIDC session
-                  command: <<include(scripts/non-oidc-session.sh)>>
+          condition:
+            - and:
+                - equal:
+                    [
+                      false,
+                      << pipeline.parameters.assume_role_with_web_identity_enabled >>,
+                    ]
+          steps:
+            - run:
+                name: Bypassing OIDC session
+                command: <<include(scripts/non-oidc-session.sh)>>
       - aws-cli/setup:
           profile_name: oidc
       # - run:
