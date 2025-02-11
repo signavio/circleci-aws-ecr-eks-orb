@@ -195,7 +195,7 @@ jobs:
       - when:
           and:
             - not:
-              - equal: [ false, << pipeline.parameters.assume_role_with_web_identity_enabled >> ]
+              - equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - run:
                 name: Bypassing OIDC session
