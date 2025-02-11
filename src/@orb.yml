@@ -192,9 +192,7 @@ jobs:
                   cat "$BASH_ENV"
                   echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
-      - when:
-          and:
-            - equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
+      - when: equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - run:
                 name: Bypassing OIDC session
