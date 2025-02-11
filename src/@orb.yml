@@ -195,8 +195,8 @@ jobs:
       # - when:  << parameters.assume_role_with_web_identity_enabled >> 
       - when:
           condition:
-            - and:
-              - equal: << parameters.assume_role_with_web_identity_enabled >>
+            and:
+              - equal: [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - run:
                 name: Bypassing OIDC session
