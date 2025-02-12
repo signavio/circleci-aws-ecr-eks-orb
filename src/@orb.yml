@@ -233,7 +233,7 @@ jobs:
           steps:
             - aws-ecr/ecr_login:
                 profile_name: global_res
-                account_id: $<<parameters.eks_account_id>>
+                # account_id: $<<parameters.eks_account_id>>
       - when:
           condition:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
