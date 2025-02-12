@@ -209,7 +209,7 @@ jobs:
                   AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
                   AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
                   AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
-                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile 
+                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile
                   aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "${AWS_PROFILE}"
                   aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "${AWS_PROFILE}"
                   aws configure set region "${AWS_REGION}" --profile "${AWS_PROFILE}"
