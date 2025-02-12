@@ -156,7 +156,7 @@ jobs:
     machine:
       image: ubuntu-2204:current
     steps:
-      - when:
+      - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
@@ -185,25 +185,23 @@ jobs:
                   # cat "$BASH_ENV"
                   # echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
-      # - aws-cli/setup:
-      #     profile_name: "$AWS_PROFILE"
-      - when:
+      - when:  # NON_OIDC
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - aws-cli/setup:
                 profile_name: global_res
-      - when:
+      - when: # OIDC
           condition:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - aws-cli/setup:
                 profile_name: oidc
-      - when:
+      - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
-                name: ECR Cross Account Login
+                name: ECR Account Login - Cross Account Session
                 environment:
                   TARGET_ROLE_NAME: << parameters.target_role >>
                   TARGET_ACCOUNT_ID: $<< parameters.eks_account_id >>
@@ -227,14 +225,13 @@ jobs:
                   --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
                   --role-session-name AWSCLI-Session-cross --profile "${AWS_PROFILE}" --debug)
                   echo $tokenResponse
-      - when:
+      - when: # NON_OIDC
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - aws-ecr/ecr_login:
                 profile_name: global_res
-                # account_id: $<<parameters.eks_account_id>>
-      - when:
+      - when: # OIDC
           condition:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
@@ -242,12 +239,11 @@ jobs:
                 profile_name: oidc
                 account_id: $<<parameters.eks_account_id>>
                 # use_credentials_helper: false
-      - when:
+      - when: # NON_OIDC
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - aws-ecr/build_and_push_image:
-                account_id: $<<parameters.eks_account_id>>
                 attach_workspace: <<parameters.attach_workspace>>
                 workspace_root: <<parameters.workspace_root>>
                 auth:
@@ -261,7 +257,7 @@ jobs:
                 dockerfile: <<parameters.dockerfile>>
                 extra_build_args: <<parameters.extra_build_args>>
                 platform: <<parameters.platform>>
-      - when:
+      - when: # OIDC
           condition:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
