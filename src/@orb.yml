@@ -217,10 +217,17 @@ jobs:
                   --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
                   --role-session-name AWSCLI-Session-cross --profile "${AWS_PROFILE}" --debug)
                   echo $tokenResponse
-      - aws-ecr/ecr_login:
-          profile_name: "$AWS_PROFILE"
-          account_id: $<<parameters.eks_account_id>>
-          # use_credentials_helper: false
+      - when:
+          condition:
+            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
+          steps:
+            - aws-ecr/ecr_login:
+                profile_name: global_res
+                account_id: $<<parameters.eks_account_id>>
+      # - aws-ecr/ecr_login:
+      #     profile_name: "$AWS_PROFILE"
+      #     account_id: $<<parameters.eks_account_id>>
+      #     # use_credentials_helper: false
       - aws-ecr/build_and_push_image:
           account_id: $<<parameters.eks_account_id>>
           attach_workspace: <<parameters.attach_workspace>>
