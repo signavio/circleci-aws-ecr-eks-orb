@@ -188,7 +188,7 @@ jobs:
                   # echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
       - aws-cli/setup:
-          profile_name: $AWS_PROFILE
+          profile_name: "$AWS_PROFILE"
       - when:
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
@@ -203,7 +203,7 @@ jobs:
                   echo $AWS_SESSION_TOKEN
                   cat ~/.aws/credentials
                   printenv
-                  echo $AWS_PROFILE
+                  echo "$AWS_PROFILE"
                   echo $TARGET_ROLE_NAME
                   AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
                   AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
@@ -218,7 +218,7 @@ jobs:
                   --role-session-name AWSCLI-Session-cross --profile "${AWS_PROFILE}" --debug)
                   echo $tokenResponse
       - aws-ecr/ecr_login:
-          profile_name: $AWS_PROFILE
+          profile_name: "$AWS_PROFILE"
           account_id: $<<parameters.eks_account_id>>
           # use_credentials_helper: false
       - aws-ecr/build_and_push_image:
@@ -227,8 +227,8 @@ jobs:
           workspace_root: <<parameters.workspace_root>>
           auth:
             - aws-cli/setup:
-                profile_name: $AWS_PROFILE
-          profile_name: $AWS_PROFILE
+                profile_name: "$AWS_PROFILE"
+          profile_name: "$AWS_PROFILE"
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           build_path: <<parameters.build_path>>
