@@ -164,7 +164,6 @@ jobs:
                 environment:
                   TARGET_ROLE_NAME: << parameters.target_role >>
                   TARGET_ACCOUNT_ID: << parameters.eks_account_id >>
-                  # AWS_PROFILE: oidc
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
@@ -243,7 +242,7 @@ jobs:
                 profile_name: oidc
                 account_id: $<<parameters.eks_account_id>>
                 # use_credentials_helper: false
-       - when:
+      - when:
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
@@ -262,7 +261,7 @@ jobs:
                 dockerfile: <<parameters.dockerfile>>
                 extra_build_args: <<parameters.extra_build_args>>
                 platform: <<parameters.platform>>
-        - when:
+      - when:
           condition:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
