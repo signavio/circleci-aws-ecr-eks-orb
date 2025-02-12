@@ -105,6 +105,7 @@ jobs:
     executor: <<parameters.executor>>
     environment:
       DOCKER_BUILDKIT: "1"
+      AWS_PROFILE: "global_res"
     parameters:
       <<: *build-push-parameters
       eks_account_id:
@@ -164,7 +165,7 @@ jobs:
                 environment:
                   TARGET_ROLE_NAME: << parameters.target_role >>
                   TARGET_ACCOUNT_ID: << parameters.eks_account_id >>
-                  PROFILE: oidc
+                  AWS_PROFILE: oidc
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
@@ -181,13 +182,13 @@ jobs:
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
                   echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'" >> $BASH_ENV
-                  echo "export AWS_PROFILE='oidc'" >> $BASH_ENV
+                  echo "export AWS_PROFILE=${AWS_PROFILE}" >> $BASH_ENV
                   source $BASH_ENV
                   # cat "$BASH_ENV"
                   # echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
       - aws-cli/setup:
-          profile_name: oidc
+          profile_name: $AWS_PROFILE
       - when:
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
@@ -208,16 +209,16 @@ jobs:
                   AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
                   AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
                   AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
-                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile oidc
-                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile oidc
-                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile oidc
-                  aws configure set region "${AWS_REGION}" --profile oidc
+                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile 
+                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "${AWS_PROFILE}"
+                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "${AWS_PROFILE}"
+                  aws configure set region "${AWS_REGION}" --profile "${AWS_PROFILE}"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::${AWS_ECR_REPO_ACCOUNT_ID_TEST}:role/$TARGET_ROLE_NAME \
-                  --role-session-name AWSCLI-Session-cross --profile oidc --debug)
+                  --role-session-name AWSCLI-Session-cross --profile "${AWS_PROFILE}" --debug)
                   echo $tokenResponse
       - aws-ecr/ecr_login:
-          profile_name: oidc
+          profile_name: $AWS_PROFILE
           account_id: $<<parameters.eks_account_id>>
           # use_credentials_helper: false
       - aws-ecr/build_and_push_image:
@@ -226,8 +227,8 @@ jobs:
           workspace_root: <<parameters.workspace_root>>
           auth:
             - aws-cli/setup:
-                profile_name: oidc
-          profile_name: oidc
+                profile_name: $AWS_PROFILE
+          profile_name: $AWS_PROFILE
           repo: <<parameters.repo>>
           path: <<parameters.path>>
           build_path: <<parameters.build_path>>
