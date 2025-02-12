@@ -147,9 +147,9 @@ jobs:
       target_role:
         description: roll to be used for the cross account ecr connection
         type: string
-      account_id:
-        description: Accound id of the Deployment/central account
-        type: string
+      # account_id:
+      #   description: Accound id of the Deployment/central account
+      #   type: string
       default_region:
         description: default deployment region
         type: string
@@ -168,7 +168,7 @@ jobs:
                 environment:
                   ROLE_NAME: << parameters.role >>
                   TARGET_ROLE_NAME: << parameters.target_role >>
-                  ACCOUNT_ID: << parameters.account_id >>
+                  # ACCOUNT_ID: << parameters.account_id >>
                   TARGET_ACCOUNT_ID: << parameters.eks_account_id >>
                   PROFILE: oidc
                   DEFAULT_REGION: << parameters.default_region >>
