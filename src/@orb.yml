@@ -197,7 +197,7 @@ jobs:
           steps:
             - run:
                 name: Bypassing OIDC session
-                command: <<include(scripts/non-oidc-session.sh)>>
+                command: << include(scripts/non-oidc-session.sh) >>
       - aws-cli/setup:
           profile_name: oidc
       # - run:
