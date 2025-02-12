@@ -141,18 +141,20 @@ jobs:
       k8s_namespace:
         description: Kubernetes namespace the deployment is located in
         type: string
-      role:
-        description: The role to be assumed to establish the central account
-        type: string
+      # role:
+      #   description: The role to be assumed to establish the central account
+      #   type: string
       target_role:
         description: roll to be used for the cross account ecr connection
         type: string
+        default: ""
       # account_id:
       #   description: Accound id of the Deployment/central account
       #   type: string
       default_region:
         description: default deployment region
         type: string
+        default: "eu-central-1"
       assume_role_with_web_identity_enabled:
         description: flag to enable/disable oidc
         type: boolean
@@ -166,7 +168,7 @@ jobs:
             - run:
                 name: Assume Role with Web Identity
                 environment:
-                  ROLE_NAME: << parameters.role >>
+                  # ROLE_NAME: << parameters.role >>
                   TARGET_ROLE_NAME: << parameters.target_role >>
                   # ACCOUNT_ID: << parameters.account_id >>
                   TARGET_ACCOUNT_ID: << parameters.eks_account_id >>
@@ -177,7 +179,7 @@ jobs:
                   circleci env subst
                   AWS_CLI_STR_PROFILE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
                   echo "${AWS_CLI_STR_PROFILE_NAME}"
-                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${ROLE_NAME}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
+                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
                   key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
