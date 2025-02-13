@@ -266,7 +266,7 @@ jobs:
                 auth:
                   - aws-cli/setup:
                       profile_name: oidc
-                profile_name: global-res
+                profile_name: global_res
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
                 build_path: <<parameters.build_path>>
