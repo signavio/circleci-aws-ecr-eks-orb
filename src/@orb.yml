@@ -153,18 +153,14 @@ jobs:
         description: flag to enable/disable oidc
         type: boolean
         default: false
-     ecr_account_id:
-        description: |
-          Env var of ECR account ID
-          (defaults to ECR_ACCOUNT_ID_PROD)
-        type: env_var_name
-        default: ECR_ACCOUNT_ID_PROD
-     ecr_role_name:
-        description: |
-          Env var of ECR role name
-          (defaults to ECR_ACCOUNT_ID_PROD)
-        type: env_var_name
-        default: ECR_ACCOUNT_ID_PROD
+      ecr_account_id:
+          description: Env var of ECR account ID
+          type: env_var_name
+          default: ECR_ACCOUNT_ID_PROD
+      ecr_role_name:
+          description: Env var of ECR role name
+          type: env_var_name
+          default: ECR_ACCOUNT_ID_PROD
     machine:
       image: ubuntu-2204:current
     steps:
