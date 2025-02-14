@@ -153,7 +153,8 @@ jobs:
       #     profile_name: global_res
       - when: # NON_OIDC
           condition:
-            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/build_and_push_image:
                 attach_workspace: <<parameters.attach_workspace>>
@@ -171,7 +172,8 @@ jobs:
                 platform: <<parameters.platform>>
       - when: # OIDC
           condition:
-            equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/build_and_push_image:
                 attach_workspace: <<parameters.attach_workspace>>
@@ -262,4 +264,3 @@ examples:
                 context: ECR
                 repo: myecrrepo
                 deployment_name: mydeployment
-                
