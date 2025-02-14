@@ -184,13 +184,13 @@ jobs:
           steps:
             - aws-cli/setup:
                 profile_name: global_res
-      # - when: # OIDC
-      #     condition:
-      #       equal:
-      #         [true, << parameters.assume_role_with_web_identity_enabled >>]
-      #     steps:
-      #       - aws-cli/setup:
-      #           profile_name: oidc
+      - when: # OIDC
+          condition:
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-cli/setup:
+                profile_name: oidc
       - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
