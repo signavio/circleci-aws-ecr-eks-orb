@@ -248,7 +248,10 @@ jobs:
             - aws-ecr/ecr_login:
                 profile_name: crosssession
                 account_id: $<<parameters.eks_account_id>>
-                use_credentials_helper: false
+            - run:
+                name: "debugging the docker login issue"
+                command: |
+                  printenv
       - when: # NON_OIDC
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
