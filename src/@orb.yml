@@ -97,7 +97,7 @@ jobs:
           dockerfile: <<parameters.dockerfile>>
           extra_build_args: <<parameters.extra_build_args>>
           platform: <<parameters.platform>>
-#-----
+  #-----
   build-push-restart:
     description: >
       Uses circleci/aws-ecr to build and publish the docker images.
@@ -183,15 +183,17 @@ jobs:
                   # cat "$BASH_ENV"
                   # echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
-      - when:  # NON_OIDC
+      - when: # NON_OIDC
           condition:
-            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
                 profile_name: global_res
       - when: # OIDC
           condition:
-            equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
                 profile_name: oidc
@@ -237,13 +239,15 @@ jobs:
                   source $BASH_ENV
       - when: # NON_OIDC
           condition:
-            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/ecr_login:
                 profile_name: global_res
       - when: # OIDC
           condition:
-            equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/ecr_login:
                 profile_name: crosssession
@@ -254,7 +258,8 @@ jobs:
                   printenv
       - when: # NON_OIDC
           condition:
-            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/build_and_push_image:
                 attach_workspace: <<parameters.attach_workspace>>
@@ -272,14 +277,15 @@ jobs:
                 platform: <<parameters.platform>>
       - when: # OIDC
           condition:
-            equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - run:
                 name: "debugging the docker login issue"
                 command: |
                   cat ~/.aws/credentials
                   cat ~/.aws/config
-                  
+
             - aws-ecr/build_and_push_image:
                 account_id: $<<parameters.eks_account_id>>
                 attach_workspace: <<parameters.attach_workspace>>
@@ -370,4 +376,3 @@ examples:
                 context: ECR
                 repo: myecrrepo
                 deployment_name: mydeployment
-
