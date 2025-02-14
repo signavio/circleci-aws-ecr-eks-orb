@@ -283,14 +283,10 @@ jobs:
                 account_id: $<<parameters.eks_account_id>>
                 attach_workspace: <<parameters.attach_workspace>>
                 workspace_root: <<parameters.workspace_root>>
-                auth:
-                  - aws-cli/setup:
-                      profile_name: crosssession
-                  - run:
-                    command: |
-                      echo "export AWS_ECR_EVAL_PROFILE_NAME='crosssession'" >> $BASH_ENV
-                      source $BASH_ENV
-                # profile_name: crosssession
+                # auth:
+                #   - aws-cli/setup:
+                #       profile_name: crosssession
+                profile_name: crosssession
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
                 build_path: <<parameters.build_path>>
