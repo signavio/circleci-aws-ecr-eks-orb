@@ -105,6 +105,8 @@ jobs:
     executor: <<parameters.executor>>
     environment:
       DOCKER_BUILDKIT: "1"
+      ECR_ROLE_NAME: << parameters.ecr_role_name >>
+      ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
     parameters:
       <<: *build-push-parameters
       eks_account_id:
@@ -199,9 +201,9 @@ jobs:
           steps:
             - run:
                 name: ECR Account Login - Cross Account Session
-                environment:
-                  ECR_ROLE_NAME: << parameters.ecr_role_name >>
-                  ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
+                # environment:
+                #   ECR_ROLE_NAME: << parameters.ecr_role_name >>
+                #   ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
                   # DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing a cross account session with ECR account..."
@@ -242,10 +244,6 @@ jobs:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
-            - run:
-                environment:
-                  ECR_ROLE_NAME: << parameters.ecr_role_name >>
-                  ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
             - aws-ecr/ecr_login:
                 profile_name: crosssession
                 account_id: $ECR_ROLE_NAME
@@ -277,10 +275,6 @@ jobs:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
-            - run:
-                environment:
-                  ECR_ROLE_NAME: << parameters.ecr_role_name >>
-                  ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
             # - run:
             #     name: "debugging the docker login issue"
             #     command: |
