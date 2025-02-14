@@ -286,7 +286,7 @@ jobs:
                 auth:
                   - aws-cli/setup:
                       profile_name: crosssession
-                      role_arn: arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.target_role>>
+                      role_session_name: AWSCLI-Session-cross
                 profile_name: crosssession
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
