@@ -8,7 +8,7 @@ description: |
   Source code: https://github.com/signavio/circleci-aws-ecr-eks-orb
 
 orbs:
-  aws-ecr: circleci/aws-ecr@9.3.7
+  aws-ecr: circleci/aws-ecr@9.0.2
   aws-cli: circleci/aws-cli@4.1.2
 
 executors:
@@ -97,7 +97,6 @@ jobs:
           dockerfile: <<parameters.dockerfile>>
           extra_build_args: <<parameters.extra_build_args>>
           platform: <<parameters.platform>>
-#-----
   build-push-restart:
     description: >
       Uses circleci/aws-ecr to build and publish the docker images.
@@ -141,117 +140,13 @@ jobs:
       k8s_namespace:
         description: Kubernetes namespace the deployment is located in
         type: string
-      target_role:
-        description: roll to be used for the cross account ecr connection
-        type: string
-        default: ""
-      default_region:
-        description: default deployment region
-        type: string
-        default: "eu-central-1"
-      assume_role_with_web_identity_enabled:
-        description: flag to enable/disable oidc
-        type: boolean
-        default: false
     machine:
       image: ubuntu-2204:current
     steps:
-      - when: # OIDC
-          condition: << parameters.assume_role_with_web_identity_enabled >>
-          steps:
-            - run:
-                name: Assume Role with Web Identity - OIDC Session
-                environment:
-                  TARGET_ROLE_NAME: << parameters.target_role >>
-                  DEFAULT_REGION: << parameters.default_region >>
-                command: |
-                  echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
-                  # circleci env subst
-                  # AWS_CLI_STR_PROFILE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
-                  # echo "${AWS_CLI_STR_PROFILE_NAME}"
-                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
-                  key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
-                  access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
-                  session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
-                  # echo $temp_role
-                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
-                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
-                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
-                  echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
-                  echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'" >> $BASH_ENV
-                  source $BASH_ENV
-                  # cat "$BASH_ENV"
-                  # echo $AWS_SESSION_TOKEN
-                  echo "OIDC session established"
-      - when:  # NON_OIDC
-          condition:
-            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
-          steps:
-            - aws-cli/setup:
-                profile_name: global_res
-      - when: # OIDC
-          condition:
-            equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
-          steps:
-            - aws-cli/setup:
-                profile_name: oidc
-      - when: # OIDC
-          condition: << parameters.assume_role_with_web_identity_enabled >>
-          steps:
-            - run:
-                name: ECR Account Login - Cross Account Session
-                environment:
-                  TARGET_ROLE_NAME: << parameters.target_role >>
-                  DEFAULT_REGION: << parameters.default_region >>
-                command: |
-                  echo "Establishing a cross account session with ECR account..."
-                  echo $AWS_SESSION_TOKEN
-                  cat ~/.aws/credentials
-                  printenv
-                  echo $TARGET_ROLE_NAME
-                  AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
-                  AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
-                  AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
-                  AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
-                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile "oidc"
-                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "oidc"
-                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "oidc"
-                  aws configure set region "${AWS_REGION}" --profile "oidc"
-                  tokenResponse=$(aws sts assume-role \
-                  --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$TARGET_ROLE_NAME \
-                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
-                  echo $tokenResponse
-                  key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
-                  access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
-                  session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
-                  aws configure set aws_access_key_id "${key_id}" --profile "crosssession"
-                  aws configure set aws_secret_access_key "${access_key}" --profile "crosssession"
-                  aws configure set aws_session_token "${session_token}" --profile "crosssession"
-                  aws configure set region "${AWS_REGION}" --profile "crosssession"
-                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
-                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
-                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
-                  echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
-                  echo "export AWS_ECR_EVAL_PROFILE_NAME='crosssession'" >> $BASH_ENV
-                  source $BASH_ENV
-                  source $BASH_ENV
-      - when: # NON_OIDC
-          condition:
-            equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
-          steps:
-            - aws-ecr/ecr_login:
-                profile_name: global_res
-      - when: # OIDC
-          condition:
-            equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
-          steps:
-            - aws-ecr/ecr_login:
-                profile_name: crosssession
-                account_id: $<<parameters.eks_account_id>>
-            - run:
-                name: "debugging the docker login issue"
-                command: |
-                  printenv
+      # - aws-cli/setup:
+      #     profile_name: global_res
+      # - aws-ecr/ecr_login:
+      #     profile_name: global_res
       - when: # NON_OIDC
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
@@ -274,20 +169,14 @@ jobs:
           condition:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
-            - run:
-                name: "debugging the docker login issue"
-                command: |
-                  cat ~/.aws/credentials
-                  cat ~/.aws/config
             - aws-ecr/build_and_push_image:
-                account_id: $<<parameters.eks_account_id>>
                 attach_workspace: <<parameters.attach_workspace>>
                 workspace_root: <<parameters.workspace_root>>
                 auth:
                   - aws-cli/setup:
-                      profile_name: crosssession
-                      role_session_name: AWSCLI-Session-cross
-                profile_name: crosssession
+                      profile_name: global_res
+                      role_arn: arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
+                profile_name: global_res
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
                 build_path: <<parameters.build_path>>
