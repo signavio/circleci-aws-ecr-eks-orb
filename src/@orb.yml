@@ -166,22 +166,16 @@ jobs:
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
-                  # circleci env subst
-                  # AWS_CLI_STR_PROFILE_NAME="$(echo "$AWS_CLI_STR_PROFILE_NAME" | circleci env subst)"
-                  # echo "${AWS_CLI_STR_PROFILE_NAME}"
                   temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
                   key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
-                  # echo $temp_role
                   echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
                   echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'" >> $BASH_ENV
                   source $BASH_ENV
-                  # cat "$BASH_ENV"
-                  # echo $AWS_SESSION_TOKEN
                   echo "OIDC session established"
       - when: # NON_OIDC
           condition:
@@ -190,13 +184,13 @@ jobs:
           steps:
             - aws-cli/setup:
                 profile_name: global_res
-      - when: # OIDC
-          condition:
-            equal:
-              [true, << parameters.assume_role_with_web_identity_enabled >>]
-          steps:
-            - aws-cli/setup:
-                profile_name: oidc
+      # - when: # OIDC
+      #     condition:
+      #       equal:
+      #         [true, << parameters.assume_role_with_web_identity_enabled >>]
+      #     steps:
+      #       - aws-cli/setup:
+      #           profile_name: oidc
       - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
@@ -252,10 +246,10 @@ jobs:
             - aws-ecr/ecr_login:
                 profile_name: crosssession
                 account_id: $<<parameters.eks_account_id>>
-            - run:
-                name: "debugging the docker login issue"
-                command: |
-                  printenv
+            # - run:
+            #     name: "debugging the docker login issue"
+            #     command: |
+            #       printenv
       - when: # NON_OIDC
           condition:
             equal:
@@ -280,14 +274,14 @@ jobs:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
-            - run:
-                name: "debugging the docker login issue"
-                command: |
-                  cat ~/.aws/credentials
-                  cat ~/.aws/config
-            - aws-ecr/ecr_login:
-                profile_name: crosssession
-                account_id: $<<parameters.eks_account_id>>
+            # - run:
+            #     name: "debugging the docker login issue"
+            #     command: |
+            #       cat ~/.aws/credentials
+            #       cat ~/.aws/config
+            # - aws-ecr/ecr_login:
+            #     profile_name: crosssession
+            #     account_id: $<<parameters.eks_account_id>>
             - aws-ecr/build_and_push_image:
                 account_id: $<<parameters.eks_account_id>>
                 attach_workspace: <<parameters.attach_workspace>>
@@ -313,41 +307,41 @@ jobs:
             sudo cp ./kubectl /bin/kubectl
 
             sudo apt-get update && sudo apt-get install -y jq
-      - run:
-          name: Restart deployment
-          command: |
-            tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
-            --role-session-name AWSCLI-Session)
+      # - run:
+      #     name: Restart deployment
+      #     command: |
+      #       tokenResponse=$(aws sts assume-role \
+      #       --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
+      #       --role-session-name AWSCLI-Session)
 
-            aws configure set aws_access_key_id \
-            $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-            --profile kubectl
+      #       aws configure set aws_access_key_id \
+      #       $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+      #       --profile kubectl
 
-            aws configure set aws_secret_access_key \
-            $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-            --profile kubectl
+      #       aws configure set aws_secret_access_key \
+      #       $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+      #       --profile kubectl
 
-            aws configure set aws_session_token \
-            $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-            --profile kubectl
+      #       aws configure set aws_session_token \
+      #       $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+      #       --profile kubectl
 
-            aws --profile kubectl --region $<<parameters.aws_region>> \
-              eks update-kubeconfig \
-              --name $<<parameters.eks_cluster_name>> \
-              --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
+      #       aws --profile kubectl --region $<<parameters.aws_region>> \
+      #         eks update-kubeconfig \
+      #         --name $<<parameters.eks_cluster_name>> \
+      #         --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
 
-            echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
-            source $BASH_ENV
+      #       echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+      #       source $BASH_ENV
 
-            kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
-            if [ "<<parameters.additional_deployment_name>>" ]; then
-              IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
-              for additional_deployment in "${array[@]}"
-              do
-                kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
-              done
-            fi
+      #       kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
+      #       if [ "<<parameters.additional_deployment_name>>" ]; then
+      #         IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
+      #         for additional_deployment in "${array[@]}"
+      #         do
+      #           kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
+      #         done
+      #       fi
 
 examples:
   build-push-staging:
