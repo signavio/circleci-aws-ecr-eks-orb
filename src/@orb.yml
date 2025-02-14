@@ -286,7 +286,7 @@ jobs:
                 auth:
                   - aws-cli/setup:
                       profile_name: crosssession
-                profile_name: crosssession
+                # profile_name: crosssession
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
                 build_path: <<parameters.build_path>>
