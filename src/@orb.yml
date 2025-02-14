@@ -216,7 +216,7 @@ jobs:
                   aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "oidc"
                   aws configure set region "${AWS_REGION}" --profile "oidc"
                   tokenResponse=$(aws sts assume-role \
-                  --role-arn arn:aws:iam::$ECR_ACCOUNT_ID:role/$ECR_ROLE_NAME \
+                  --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
                   --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
                   echo $tokenResponse
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
@@ -246,7 +246,7 @@ jobs:
           steps:
             - aws-ecr/ecr_login:
                 profile_name: crosssession
-                account_id: $ECR_ROLE_NAME
+                account_id: ${!ECR_ACCOUNT_ID}
             # - run:
             #     name: "debugging the docker login issue"
             #     command: |
@@ -284,7 +284,7 @@ jobs:
             #     profile_name: crosssession
             #     account_id: $<<parameters.eks_account_id>>
             - aws-ecr/build_and_push_image:
-                account_id: $ECR_ACCOUNT_ID
+                account_id: ${!ECR_ACCOUNT_ID}
                 attach_workspace: <<parameters.attach_workspace>>
                 workspace_root: <<parameters.workspace_root>>
                 auth:
