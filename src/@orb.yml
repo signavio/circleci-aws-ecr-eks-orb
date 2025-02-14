@@ -140,6 +140,10 @@ jobs:
       k8s_namespace:
         description: Kubernetes namespace the deployment is located in
         type: string
+      assume_role_with_web_identity_enabled:
+        description: flag to enable/disable oidc
+        type: boolean
+        default: false
     machine:
       image: ubuntu-2204:current
     steps:
