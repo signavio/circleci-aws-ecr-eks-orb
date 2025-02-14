@@ -153,6 +153,18 @@ jobs:
         description: flag to enable/disable oidc
         type: boolean
         default: false
+     ecr_account_id:
+        description: |
+          Env var of ECR account ID
+          (defaults to ECR_ACCOUNT_ID_PROD)
+        type: env_var_name
+        default: ECR_ACCOUNT_ID_PROD
+     ecr_role_name:
+        description: |
+          Env var of ECR role name
+          (defaults to ECR_ACCOUNT_ID_PROD)
+        type: env_var_name
+        default: ECR_ACCOUNT_ID_PROD
     machine:
       image: ubuntu-2204:current
     steps:
@@ -170,8 +182,6 @@ jobs:
                   echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
-                  # echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
-                  # echo "export AWS_ECR_EVAL_PROFILE_NAME='oidc'" >> $BASH_ENV
                   source $BASH_ENV
                   echo "OIDC session established"
       - when: # NON_OIDC
@@ -194,14 +204,11 @@ jobs:
             - run:
                 name: ECR Account Login - Cross Account Session
                 environment:
-                  TARGET_ROLE_NAME: << parameters.target_role >>
-                  DEFAULT_REGION: << parameters.default_region >>
+                  ECR_ROLE_NAME: << parameters.ecr_role_name >>
+                  ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
+                  # DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing a cross account session with ECR account..."
-                  echo $AWS_SESSION_TOKEN
-                  cat ~/.aws/credentials
-                  printenv
-                  echo $TARGET_ROLE_NAME
                   AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
                   AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
                   AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
@@ -211,7 +218,7 @@ jobs:
                   aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "oidc"
                   aws configure set region "${AWS_REGION}" --profile "oidc"
                   tokenResponse=$(aws sts assume-role \
-                  --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$TARGET_ROLE_NAME \
+                  --role-arn arn:aws:iam::$ECR_ACCOUNT_ID:role/$ECR_ROLE_NAME \
                   --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
                   echo $tokenResponse
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
@@ -224,9 +231,8 @@ jobs:
                   echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
-                  echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
-                  echo "export AWS_ECR_EVAL_PROFILE_NAME='crosssession'" >> $BASH_ENV
-                  source $BASH_ENV
+                  # echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
+                  # echo "export AWS_ECR_EVAL_PROFILE_NAME='crosssession'" >> $BASH_ENV
                   source $BASH_ENV
       - when: # NON_OIDC
           condition:
@@ -240,9 +246,13 @@ jobs:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
+            - run:
+                environment:
+                  ECR_ROLE_NAME: << parameters.ecr_role_name >>
+                  ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
             - aws-ecr/ecr_login:
                 profile_name: crosssession
-                account_id: $<<parameters.eks_account_id>>
+                account_id: $ECR_ROLE_NAME
             # - run:
             #     name: "debugging the docker login issue"
             #     command: |
@@ -271,6 +281,10 @@ jobs:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
+            - run:
+                  environment:
+                    ECR_ROLE_NAME: << parameters.ecr_role_name >>
+                    ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
             # - run:
             #     name: "debugging the docker login issue"
             #     command: |
@@ -280,7 +294,7 @@ jobs:
             #     profile_name: crosssession
             #     account_id: $<<parameters.eks_account_id>>
             - aws-ecr/build_and_push_image:
-                account_id: $<<parameters.eks_account_id>>
+                account_id: $ECR_ACCOUNT_ID
                 attach_workspace: <<parameters.attach_workspace>>
                 workspace_root: <<parameters.workspace_root>>
                 auth:
@@ -302,7 +316,6 @@ jobs:
             sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
-
             sudo apt-get update && sudo apt-get install -y jq
       # - run:
       #     name: Restart deployment
