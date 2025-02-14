@@ -165,7 +165,7 @@ jobs:
                   TARGET_ROLE_NAME: << parameters.target_role >>
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
-                  bash scripts/oidc.sh
+                  include(scripts/oidc.sh)
       - when: # NON_OIDC
           condition:
             equal:
