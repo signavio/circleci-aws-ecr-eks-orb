@@ -287,6 +287,7 @@ jobs:
                   cat ~/.aws/config
             - aws-ecr/ecr_login:
                 profile_name: crosssession
+                account_id: $<<parameters.eks_account_id>>
             - aws-ecr/build_and_push_image:
                 account_id: $<<parameters.eks_account_id>>
                 attach_workspace: <<parameters.attach_workspace>>
