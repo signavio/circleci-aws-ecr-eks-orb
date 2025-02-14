@@ -278,9 +278,9 @@ jobs:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - run:
-                  environment:
-                    ECR_ROLE_NAME: << parameters.ecr_role_name >>
-                    ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
+                environment:
+                  ECR_ROLE_NAME: << parameters.ecr_role_name >>
+                  ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
             # - run:
             #     name: "debugging the docker login issue"
             #     command: |
