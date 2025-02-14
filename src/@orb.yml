@@ -163,7 +163,6 @@ jobs:
                 name: Assume Role with Web Identity - OIDC Session
                 environment:
                   TARGET_ROLE_NAME: << parameters.target_role >>
-                  TARGET_ACCOUNT_ID: << parameters.eks_account_id >>
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing the OIDC session with account...${ACCOUNT_ID}..and the Role ${ROLE_NAME}"
@@ -203,7 +202,6 @@ jobs:
                 name: ECR Account Login - Cross Account Session
                 environment:
                   TARGET_ROLE_NAME: << parameters.target_role >>
-                  TARGET_ACCOUNT_ID: $<< parameters.eks_account_id >>
                   DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing a cross account session with ECR account..."
@@ -223,6 +221,14 @@ jobs:
                   --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$TARGET_ROLE_NAME \
                   --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
                   echo $tokenResponse
+                  key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
+                  aws configure set aws_access_key_id "${key_id}" --profile "oidc"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "oidc"
+                  aws configure set aws_session_token "${session_token}" --profile "oidc"
+                  aws configure set region "${AWS_REGION}" --profile "oidc"
+                  source $BASH_ENV
       - when: # NON_OIDC
           condition:
             equal: [ false, << parameters.assume_role_with_web_identity_enabled >> ]
