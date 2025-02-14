@@ -181,8 +181,10 @@ jobs:
                 auth:
                   - aws-cli/setup:
                       # profile_name: global_res
+                      profile_name: OIDC-USER
                       role_arn: arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
                 # profile_name: global_res
+                profile_name: OIDC-USER
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
                 build_path: <<parameters.build_path>>
