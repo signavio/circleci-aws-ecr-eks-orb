@@ -178,6 +178,7 @@ jobs:
             - aws-ecr/build_and_push_image:
                 attach_workspace: <<parameters.attach_workspace>>
                 workspace_root: <<parameters.workspace_root>>
+                account_id: $<<parameters.eks_account_id>>
                 auth:
                   - aws-cli/setup:
                       # profile_name: global_res
