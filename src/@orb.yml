@@ -286,6 +286,10 @@ jobs:
                 auth:
                   - aws-cli/setup:
                       profile_name: crosssession
+                  - run:
+                    command: |
+                      echo "export AWS_ECR_EVAL_PROFILE_NAME='crosssession'" >> $BASH_ENV
+                      source $BASH_ENV
                 # profile_name: crosssession
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
