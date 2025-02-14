@@ -224,10 +224,16 @@ jobs:
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
-                  aws configure set aws_access_key_id "${key_id}" --profile "oidc"
-                  aws configure set aws_secret_access_key "${access_key}" --profile "oidc"
-                  aws configure set aws_session_token "${session_token}" --profile "oidc"
-                  aws configure set region "${AWS_REGION}" --profile "oidc"
+                  aws configure set aws_access_key_id "${key_id}" --profile "crosssession"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "crosssession"
+                  aws configure set aws_session_token "${session_token}" --profile "crosssession"
+                  aws configure set region "${AWS_REGION}" --profile "crosssession"
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+                  echo "export AWS_REGION=${DEFAULT_REGION}" >> $BASH_ENV
+                  echo "export AWS_ECR_EVAL_PROFILE_NAME='crosssession'" >> $BASH_ENV
+                  source $BASH_ENV
                   source $BASH_ENV
       - when: # NON_OIDC
           condition:
@@ -240,7 +246,7 @@ jobs:
             equal: [ true, << parameters.assume_role_with_web_identity_enabled >> ]
           steps:
             - aws-ecr/ecr_login:
-                profile_name: oidc
+                profile_name: crosssession
                 account_id: $<<parameters.eks_account_id>>
                 # use_credentials_helper: false
       - when: # NON_OIDC
@@ -276,8 +282,8 @@ jobs:
                 workspace_root: <<parameters.workspace_root>>
                 auth:
                   - aws-cli/setup:
-                      profile_name: oidc
-                profile_name: oidc
+                      profile_name: crosssession
+                profile_name: crosssession
                 repo: <<parameters.repo>>
                 path: <<parameters.path>>
                 build_path: <<parameters.build_path>>
