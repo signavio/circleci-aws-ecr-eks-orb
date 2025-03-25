@@ -392,6 +392,7 @@ jobs:
           name: Restart deployment
           command: |
             echo "Establishing the OIDC session with account...${DEPLOYMENT_ACCOUNT_ID}..and the Role ${OIDC_ROLE}"
+            AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
             temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
             key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
             access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
