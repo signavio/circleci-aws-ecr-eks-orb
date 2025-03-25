@@ -402,31 +402,29 @@ jobs:
             aws configure set aws_session_token "${session_token}" --profile "oidc"
             aws configure set region "${AWS_REGION}" --profile "oidc"
             echo "OIDC session established"
-            echo "$(echo "$<< parameters.eks_account_id >>")"
-            echo "$(echo "$<< parameters.role_in_target_account >>")"
             tokenResponse=$(aws sts assume-role \
             --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >> \
             --role-session-name "AWSCLI-Session" --profile "oidc" --debug)
 
-            # aws configure set aws_access_key_id \
-            # $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-            # --profile kubectl
+            aws configure set aws_access_key_id \
+            $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+            --profile kubectl
 
-            # aws configure set aws_secret_access_key \
-            # $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-            # --profile kubectl
+            aws configure set aws_secret_access_key \
+            $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+            --profile kubectl
 
-            # aws configure set aws_session_token \
-            # $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-            # --profile kubectl
+            aws configure set aws_session_token \
+            $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+            --profile kubectl
 
-            # aws --profile kubectl --region $<<parameters.aws_region>> \
-            #   eks update-kubeconfig \
-            #   --name $<<parameters.eks_cluster_name>> \
-            #   --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
+            aws --profile kubectl --region $<<parameters.aws_region>> \
+              eks update-kubeconfig \
+              --name $<<parameters.eks_cluster_name>> \
+              --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
 
-            # echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
-            # source $BASH_ENV
+            echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+            source $BASH_ENV
 
             # kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
             # if [ "<<parameters.additional_deployment_name>>" ]; then
