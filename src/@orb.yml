@@ -405,7 +405,6 @@ jobs:
             aws configure set aws_session_token "${session_token}" --profile "oidc"
             aws configure set region "${AWS_REGION}" --profile "oidc"
             echo "OIDC session established"
-            
             tokenResponse=$(aws sts assume-role \
             --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
             --role-session-name AWSCLI-Session --profile "oidc")
