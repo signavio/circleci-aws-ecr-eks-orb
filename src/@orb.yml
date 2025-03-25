@@ -128,10 +128,6 @@ jobs:
           steps:
             - run:
                 name: ECR Account Login - Cross Account Session
-                # environment:
-                #   ECR_ROLE_NAME: << parameters.ecr_role_name >>
-                #   ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
-                  # DEFAULT_REGION: << parameters.default_region >>
                 command: |
                   echo "Establishing a cross account session with ECR account..."
                   AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
@@ -392,41 +388,41 @@ jobs:
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
             sudo apt-get update && sudo apt-get install -y jq
-      # - run:
-      #     name: Restart deployment
-      #     command: |
-      #       tokenResponse=$(aws sts assume-role \
-      #       --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
-      #       --role-session-name AWSCLI-Session)
+      - run:
+          name: Restart deployment
+          command: |
+            tokenResponse=$(aws sts assume-role \
+            --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
+            --role-session-name AWSCLI-Session)
 
-      #       aws configure set aws_access_key_id \
-      #       $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-      #       --profile kubectl
+            aws configure set aws_access_key_id \
+            $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+            --profile kubectl
 
-      #       aws configure set aws_secret_access_key \
-      #       $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-      #       --profile kubectl
+            aws configure set aws_secret_access_key \
+            $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+            --profile kubectl
 
-      #       aws configure set aws_session_token \
-      #       $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-      #       --profile kubectl
+            aws configure set aws_session_token \
+            $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+            --profile kubectl
 
-      #       aws --profile kubectl --region $<<parameters.aws_region>> \
-      #         eks update-kubeconfig \
-      #         --name $<<parameters.eks_cluster_name>> \
-      #         --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
+            aws --profile kubectl --region $<<parameters.aws_region>> \
+              eks update-kubeconfig \
+              --name $<<parameters.eks_cluster_name>> \
+              --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
 
-      #       echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
-      #       source $BASH_ENV
+            echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+            source $BASH_ENV
 
-      #       kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
-      #       if [ "<<parameters.additional_deployment_name>>" ]; then
-      #         IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
-      #         for additional_deployment in "${array[@]}"
-      #         do
-      #           kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
-      #         done
-      #       fi
+            kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
+            if [ "<<parameters.additional_deployment_name>>" ]; then
+              IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
+              for additional_deployment in "${array[@]}"
+              do
+                kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
+              done
+            fi
 
 examples:
   build-push-staging:
