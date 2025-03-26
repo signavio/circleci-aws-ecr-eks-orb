@@ -445,6 +445,10 @@ jobs:
                   aws configure set AWS_SECRET_ACCESS_KEY "${AWS_SECRET_ACCESS_KEY}" --profile "oidcsession"
                   aws configure set AWS_SESSION_TOKEN "${AWS_SESSION_TOKEN}" --profile "oidcsession"
                   aws configure set region "${AWS_REGION}" --profile "oidcsession"
+                  echo "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" >> $BASH_ENV
+                  source $BASH_ENV
                   echo "OIDC session established"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >> \
