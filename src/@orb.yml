@@ -316,7 +316,7 @@ jobs:
                   aws configure set region "${AWS_REGION}" --profile "oidc"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
-                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
+                  --role-session-name AWSCLI-Session-cross --profile "oidc-cross" --debug)
                   echo $tokenResponse
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
