@@ -430,6 +430,16 @@ jobs:
             - run:
                 name: Restart deployment
                 command: |
+                  echo "Establishing the OIDC session with account...${DEPLOYMENT_ACCOUNT_ID}..and the Role ${OIDC_ROLE}"
+                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
+                  AWS_ACCESS_KEY_ID=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
+                  AWS_SECRET_ACCESS_KEY=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
+                  AWS_SESSION_TOKEN=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
+                  aws configure set AWS_ACCESS_KEY_ID "${AWS_ACCESS_KEY_ID}" --profile "oidc"
+                  aws configure set AWS_SECRET_ACCESS_KEY "${AWS_SECRET_ACCESS_KEY}" --profile "oidc"
+                  aws configure set AWS_SESSION_TOKEN "${AWS_SESSION_TOKEN}" --profile "oidc"
+                  aws configure set region "${AWS_REGION}" --profile "oidc"
+                  echo "OIDC session established"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >> \
                   --role-session-name "AWSCLI-Session" --profile "oidc" --debug)
