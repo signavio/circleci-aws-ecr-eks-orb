@@ -453,14 +453,14 @@ jobs:
                   echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
                   source $BASH_ENV
 
-                  # kubectl rollout restart deployment/<< parameters.deployment_name >> -n << parameters.k8s_namespace >>
-                  # if [ "<< parameters.additional_deployment_name >>" ]; then
-                  #   IFS=', ' read -r -a array \<<< "<< parameters.additional_deployment_name >>"
-                  #   for additional_deployment in "${array[@]}"
-                  #   do
-                  #     kubectl rollout restart deployment/${additional_deployment} -n << parameters.k8s_namespace >>
-                  #   done
-                  # fi
+                  kubectl rollout restart deployment/<< parameters.deployment_name >> -n << parameters.k8s_namespace >>
+                  if [ "<< parameters.additional_deployment_name >>" ]; then
+                    IFS=', ' read -r -a array \<<< "<< parameters.additional_deployment_name >>"
+                    for additional_deployment in "${array[@]}"
+                    do
+                      kubectl rollout restart deployment/${additional_deployment} -n << parameters.k8s_namespace >>
+                    done
+                  fi
 
 examples:
   build-push-staging:
