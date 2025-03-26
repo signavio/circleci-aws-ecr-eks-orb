@@ -303,7 +303,7 @@ jobs:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
-                profile_name: oidc
+                profile_name: oidcsession
       - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
@@ -315,13 +315,13 @@ jobs:
                   AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
                   AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
                   AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
-                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile "oidc"
-                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "oidc"
-                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "oidc"
-                  aws configure set region "${AWS_REGION}" --profile "oidc"
+                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile "ecr"
+                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "ecr"
+                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "ecr"
+                  aws configure set region "${AWS_REGION}" --profile "ecr"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
-                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
+                  --role-session-name AWSCLI-Session-cross --profile "ecr" --debug)
                   echo $tokenResponse
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
