@@ -25,14 +25,14 @@ commands:
   greet:
     description: "Reusable shell command to greet"
     parameters:
-      name:
+      tname:
         type: string
         default: "World"
     steps:
       - run:
-          name: Say Hello
+          tname: Say Hello
           command: |
-            echo "Hello, << parameters.name >>!"
+            echo "Hello, << parameters.tname >>!"
 jobs:
   build-push:
     description: >
@@ -272,7 +272,7 @@ jobs:
       image: ubuntu-2204:current
     steps:
       - greet:
-          name: "Another User"
+          tname: "Another User"
       - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
