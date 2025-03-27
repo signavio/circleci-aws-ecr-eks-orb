@@ -21,7 +21,18 @@ executors:
         default: ubuntu-2204:current
     machine:
       image: <<parameters.image>>
-
+commands:
+  greet:
+    description: "Reusable shell command to greet"
+    parameters:
+      name:
+        type: string
+        default: "World"
+    steps:
+      - run:
+          name: Say Hello
+          command: |
+            echo "Hello, << parameters.name >>!"
 jobs:
   build-push:
     description: >
@@ -260,6 +271,8 @@ jobs:
     machine:
       image: ubuntu-2204:current
     steps:
+      - greet:
+          name: "Another User"
       - when: # OIDC
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
