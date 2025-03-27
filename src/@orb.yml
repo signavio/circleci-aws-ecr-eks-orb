@@ -23,6 +23,7 @@ executors:
       image: <<parameters.image>>
 # The orb-tools 9.0.0 doesn't support calling external script and hence we need put all the scripts inline
 # Upgrading the orb-tools to latest version is not considered as we will be migrating everything to Github Actions in future.
+# This version introduce a flag assume_role_with_web_identity_enabled=false to ensure the backward compatibility.
 jobs:
   build-push:
     description: >
@@ -94,7 +95,7 @@ jobs:
     machine:
       image: ubuntu-2204:current
     steps:
-      - when: # OIDC
+      - when: # OIDC  - Establish an OIDC Session
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
@@ -110,21 +111,21 @@ jobs:
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   source $BASH_ENV
                   echo "OIDC session established"
-      - when: # NON_OIDC
+      - when: # NON_OIDC - AWS CLI setup with global_res profile
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
                 profile_name: global_res
-      - when: # OIDC
+      - when: # OIDC - AWS CLI setup with oidc profile
           condition:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
                 profile_name: oidc
-      - when: # OIDC
+      - when: # OIDC - ECR login with Cross Account Approach
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
@@ -154,14 +155,14 @@ jobs:
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   source $BASH_ENV
-      - when: # NON_OIDC
+      - when: # NON_OIDC - ECR login directly from pipeline
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/ecr_login:
                 profile_name: global_res
-      - when: # NON_OIDC
+      - when: # NON_OIDC - build image and push to the target account directly from pipeline
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
@@ -180,7 +181,7 @@ jobs:
                 dockerfile: <<parameters.dockerfile>>
                 extra_build_args: <<parameters.extra_build_args>>
                 platform: <<parameters.platform>>
-      - when: # OIDC
+      - when: # OIDC - Build and Push image through the OIDC cross account approach
           condition:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
@@ -270,7 +271,7 @@ jobs:
     machine:
       image: ubuntu-2204:current
     steps:
-      - when: # OIDC
+      - when: # OIDC - Establish an OIDC Session
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
@@ -286,21 +287,21 @@ jobs:
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   source $BASH_ENV
                   echo "OIDC session established"
-      - when: # NON_OIDC
+      - when: # NON_OIDC - AWS CLI setup with global_res profile
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
                 profile_name: global_res
-      - when: # OIDC
+      - when: # OIDC - AWS CLI setup with oidc profile
           condition:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-cli/setup:
                 profile_name: oidc
-      - when: # OIDC
+      - when: # OIDC - ECR login with Cross Account Approach
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
@@ -330,14 +331,14 @@ jobs:
                   echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
                   echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   source $BASH_ENV
-      - when: # NON_OIDC
+      - when: # NON_OIDC - ECR login directly from pipeline
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
           steps:
             - aws-ecr/ecr_login:
                 profile_name: global_res
-      - when: # NON_OIDC
+      - when: # NON_OIDC - build image and push to the target account directly from pipeline
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
@@ -356,7 +357,7 @@ jobs:
                 dockerfile: <<parameters.dockerfile>>
                 extra_build_args: <<parameters.extra_build_args>>
                 platform: <<parameters.platform>>
-      - when: # OIDC
+      - when: # OIDC - Build and Push image through the OIDC cross account approach
           condition:
             equal:
               [true, << parameters.assume_role_with_web_identity_enabled >>]
@@ -385,7 +386,7 @@ jobs:
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
             sudo apt-get update && sudo apt-get install -y jq
-      - when: # NON_OIDC
+      - when: # NON_OIDC - Restart the deployment directly from the pipeline session
           condition:
             equal:
               [false, << parameters.assume_role_with_web_identity_enabled >>]
@@ -425,7 +426,7 @@ jobs:
                       kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
                     done
                   fi
-      - when: # OIDC
+      - when: # OIDC -  Restart the deployment through cross account session
           condition: << parameters.assume_role_with_web_identity_enabled >>
           steps:
             - run:
