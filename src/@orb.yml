@@ -8,7 +8,7 @@ description: |
   Source code: https://github.com/signavio/circleci-aws-ecr-eks-orb
 
 orbs:
-  aws-ecr: circleci/aws-ecr@9.0.2
+  aws-ecr: circleci/aws-ecr@9.3.7
   aws-cli: circleci/aws-cli@4.1.2
 
 executors:
@@ -21,7 +21,9 @@ executors:
         default: ubuntu-2204:current
     machine:
       image: <<parameters.image>>
-
+# The orb-tools 9.0.0 doesn't support calling external script and hence we need put all the scripts inline
+# Upgrading the orb-tools to latest version is not considered as we will be migrating everything to Github Actions in future.
+# This version introduce a flag assume_role_with_web_identity_enabled=false to ensure the backward compatibility.
 jobs:
   build-push:
     description: >
@@ -29,6 +31,8 @@ jobs:
     executor: <<parameters.executor>>
     environment:
       DOCKER_BUILDKIT: "1"
+      ECR_ROLE_NAME: << parameters.ecr_role_name >>
+      ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
     parameters: &build-push-parameters
       executor:
         description: executor to use for this job
@@ -76,27 +80,129 @@ jobs:
         default: "linux/amd64"
         description: >
           String to specify the architecture of the base image
+      assume_role_with_web_identity_enabled:
+        description: flag to enable/disable oidc
+        type: boolean
+        default: false
+      ecr_account_id:
+          description: Env var of ECR account ID
+          type: env_var_name
+          default: ECR_ACCOUNT_ID_PROD
+      ecr_role_name:
+          description: Env var of ECR role name
+          type: env_var_name
+          default: ECR_ACCOUNT_ID_PROD
     machine:
       image: ubuntu-2204:current
     steps:
-      - aws-cli/setup:
-          profile_name: global_res
-      - aws-ecr/ecr_login:
-          profile_name: global_res
-      - aws-ecr/build_and_push_image:
-          attach_workspace: <<parameters.attach_workspace>>
-          workspace_root: <<parameters.workspace_root>>
-          auth:
+      - when: # OIDC  - Establish an OIDC Session
+          condition: << parameters.assume_role_with_web_identity_enabled >>
+          steps:
+            - run:
+                name: Assume Role with Web Identity - OIDC Session
+                command: |
+                  echo "Establishing the OIDC session with account...${DEPLOYMENT_ACCOUNT_ID}..and the Role ${OIDC_ROLE}"
+                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
+                  key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+                  source $BASH_ENV
+                  echo "OIDC session established"
+      - when: # NON_OIDC - AWS CLI setup with global_res profile
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
             - aws-cli/setup:
                 profile_name: global_res
-          profile_name: global_res
-          repo: <<parameters.repo>>
-          path: <<parameters.path>>
-          build_path: <<parameters.build_path>>
-          tag: <<parameters.tag>>
-          dockerfile: <<parameters.dockerfile>>
-          extra_build_args: <<parameters.extra_build_args>>
-          platform: <<parameters.platform>>
+      - when: # OIDC - AWS CLI setup with oidc profile
+          condition:
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-cli/setup:
+                profile_name: oidc
+      - when: # OIDC - ECR login with Cross Account Approach
+          condition: << parameters.assume_role_with_web_identity_enabled >>
+          steps:
+            - run:
+                name: ECR Account Login - Cross Account Session
+                command: |
+                  echo "Establishing a cross account session with ECR account..."
+                  AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
+                  AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
+                  AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
+                  AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
+                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile "oidc"
+                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "oidc"
+                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "oidc"
+                  aws configure set region "${AWS_REGION}" --profile "oidc"
+                  tokenResponse=$(aws sts assume-role \
+                  --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
+                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
+                  echo $tokenResponse
+                  key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
+                  aws configure set aws_access_key_id "${key_id}" --profile "crosssession"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "crosssession"
+                  aws configure set aws_session_token "${session_token}" --profile "crosssession"
+                  aws configure set region "${AWS_REGION}" --profile "crosssession"
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+                  source $BASH_ENV
+      - when: # NON_OIDC - ECR login directly from pipeline
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-ecr/ecr_login:
+                profile_name: global_res
+      - when: # NON_OIDC - build image and push to the target account directly from pipeline
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-ecr/build_and_push_image:
+                attach_workspace: <<parameters.attach_workspace>>
+                workspace_root: <<parameters.workspace_root>>
+                auth:
+                  - aws-cli/setup:
+                      profile_name: global_res
+                profile_name: global_res
+                repo: <<parameters.repo>>
+                path: <<parameters.path>>
+                build_path: <<parameters.build_path>>
+                tag: <<parameters.tag>>
+                dockerfile: <<parameters.dockerfile>>
+                extra_build_args: <<parameters.extra_build_args>>
+                platform: <<parameters.platform>>
+      - when: # OIDC - Build and Push image through the OIDC cross account approach
+          condition:
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-ecr/build_and_push_image:
+                account_id: ${!ECR_ACCOUNT_ID}
+                attach_workspace: <<parameters.attach_workspace>>
+                workspace_root: <<parameters.workspace_root>>
+                auth:
+                  - aws-cli/setup:
+                      profile_name: crosssession
+                      role_session_name: AWSCLI-Session-cross
+                profile_name: crosssession
+                repo: <<parameters.repo>>
+                path: <<parameters.path>>
+                build_path: <<parameters.build_path>>
+                tag: <<parameters.tag>>
+                dockerfile: <<parameters.dockerfile>>
+                extra_build_args: <<parameters.extra_build_args>>
+                platform: <<parameters.platform>>
+  #-----
   build-push-restart:
     description: >
       Uses circleci/aws-ecr to build and publish the docker images.
@@ -104,6 +210,8 @@ jobs:
     executor: <<parameters.executor>>
     environment:
       DOCKER_BUILDKIT: "1"
+      ECR_ROLE_NAME: << parameters.ecr_role_name >>
+      ECR_ACCOUNT_ID: << parameters.ecr_account_id >>
     parameters:
       <<: *build-push-parameters
       eks_account_id:
@@ -140,27 +248,136 @@ jobs:
       k8s_namespace:
         description: Kubernetes namespace the deployment is located in
         type: string
+      target_role:
+        description: roll to be used for the cross account ecr connection
+        type: string
+        default: ""
+      default_region:
+        description: default deployment region
+        type: string
+        default: "eu-central-1"
+      assume_role_with_web_identity_enabled:
+        description: flag to enable/disable oidc
+        type: boolean
+        default: false
+      ecr_account_id:
+          description: Env var of ECR account ID
+          type: env_var_name
+          default: ECR_ACCOUNT_ID_PROD
+      ecr_role_name:
+          description: Env var of ECR role name
+          type: env_var_name
+          default: ECR_ACCOUNT_ID_PROD
     machine:
       image: ubuntu-2204:current
     steps:
-      - aws-cli/setup:
-          profile_name: global_res
-      - aws-ecr/ecr_login:
-          profile_name: global_res
-      - aws-ecr/build_and_push_image:
-          attach_workspace: <<parameters.attach_workspace>>
-          workspace_root: <<parameters.workspace_root>>
-          auth:
+      - when: # OIDC - Establish an OIDC Session
+          condition: << parameters.assume_role_with_web_identity_enabled >>
+          steps:
+            - run:
+                name: Assume Role with Web Identity - OIDC Session
+                command: |
+                  echo "Establishing the OIDC session with account...${DEPLOYMENT_ACCOUNT_ID}..and the Role ${OIDC_ROLE}"
+                  temp_role=$(aws sts assume-role-with-web-identity --role-arn "arn:aws:iam::${DEPLOYMENT_ACCOUNT_ID}:role/${OIDC_ROLE}" --role-session-name "web-identity-role-session" --web-identity-token "${CIRCLE_OIDC_TOKEN}")
+                  key_id=$(echo "${temp_role}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${temp_role}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${temp_role}" | jq .Credentials.SessionToken | xargs)
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+                  source $BASH_ENV
+                  echo "OIDC session established"
+      - when: # NON_OIDC - AWS CLI setup with global_res profile
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
             - aws-cli/setup:
                 profile_name: global_res
-          profile_name: global_res
-          repo: <<parameters.repo>>
-          path: <<parameters.path>>
-          build_path: <<parameters.build_path>>
-          tag: <<parameters.tag>>
-          dockerfile: <<parameters.dockerfile>>
-          extra_build_args: <<parameters.extra_build_args>>
-          platform: <<parameters.platform>>
+      - when: # OIDC - AWS CLI setup with oidc profile
+          condition:
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-cli/setup:
+                profile_name: oidc
+      - when: # OIDC - ECR login with Cross Account Approach
+          condition: << parameters.assume_role_with_web_identity_enabled >>
+          steps:
+            - run:
+                name: ECR Account Login - Cross Account Session
+                command: |
+                  echo "Establishing a cross account session with ECR account..."
+                  AWS_ACCESS_KEY_ID="$(echo "$AWS_ACCESS_KEY_ID" | circleci env subst)"
+                  AWS_SECRET_ACCESS_KEY="$(echo "$AWS_SECRET_ACCESS_KEY" | circleci env subst)"
+                  AWS_SESSION_TOKEN="$(echo "$AWS_SESSION_TOKEN" | circleci env subst)"
+                  AWS_REGION="$(echo "$AWS_REGION" | circleci env subst)"
+                  aws configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}" --profile "oidc"
+                  aws configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}" --profile "oidc"
+                  aws configure set aws_session_token "${AWS_SESSION_TOKEN}" --profile "oidc"
+                  aws configure set region "${AWS_REGION}" --profile "oidc"
+                  tokenResponse=$(aws sts assume-role \
+                  --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
+                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
+                  echo $tokenResponse
+                  key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
+                  aws configure set aws_access_key_id "${key_id}" --profile "crosssession"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "crosssession"
+                  aws configure set aws_session_token "${session_token}" --profile "crosssession"
+                  aws configure set region "${AWS_REGION}" --profile "crosssession"
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+                  source $BASH_ENV
+      - when: # NON_OIDC - ECR login directly from pipeline
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-ecr/ecr_login:
+                profile_name: global_res
+      - when: # NON_OIDC - build image and push to the target account directly from pipeline
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-ecr/build_and_push_image:
+                attach_workspace: <<parameters.attach_workspace>>
+                workspace_root: <<parameters.workspace_root>>
+                auth:
+                  - aws-cli/setup:
+                      profile_name: global_res
+                profile_name: global_res
+                repo: <<parameters.repo>>
+                path: <<parameters.path>>
+                build_path: <<parameters.build_path>>
+                tag: <<parameters.tag>>
+                dockerfile: <<parameters.dockerfile>>
+                extra_build_args: <<parameters.extra_build_args>>
+                platform: <<parameters.platform>>
+      - when: # OIDC - Build and Push image through the OIDC cross account approach
+          condition:
+            equal:
+              [true, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - aws-ecr/build_and_push_image:
+                account_id: ${!ECR_ACCOUNT_ID}
+                attach_workspace: <<parameters.attach_workspace>>
+                workspace_root: <<parameters.workspace_root>>
+                auth:
+                  - aws-cli/setup:
+                      profile_name: crosssession
+                      role_session_name: AWSCLI-Session-cross
+                profile_name: crosssession
+                repo: <<parameters.repo>>
+                path: <<parameters.path>>
+                build_path: <<parameters.build_path>>
+                tag: <<parameters.tag>>
+                dockerfile: <<parameters.dockerfile>>
+                extra_build_args: <<parameters.extra_build_args>>
+                platform: <<parameters.platform>>
       - run:
           name: "Install tools"
           command: |
@@ -168,43 +385,87 @@ jobs:
             sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
-
             sudo apt-get update && sudo apt-get install -y jq
-      - run:
-          name: Restart deployment
-          command: |
-            tokenResponse=$(aws sts assume-role \
-            --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
-            --role-session-name AWSCLI-Session)
+      - when: # NON_OIDC - Restart the deployment directly from the pipeline session
+          condition:
+            equal:
+              [false, << parameters.assume_role_with_web_identity_enabled >>]
+          steps:
+            - run:
+                name: Restart deployment
+                command: |
+                  tokenResponse=$(aws sts assume-role \
+                  --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
+                  --role-session-name AWSCLI-Session)
 
-            aws configure set aws_access_key_id \
-            $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-            --profile kubectl
+                  aws configure set aws_access_key_id \
+                  $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+                  --profile kubectl
 
-            aws configure set aws_secret_access_key \
-            $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-            --profile kubectl
+                  aws configure set aws_secret_access_key \
+                  $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+                  --profile kubectl
 
-            aws configure set aws_session_token \
-            $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-            --profile kubectl
+                  aws configure set aws_session_token \
+                  $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+                  --profile kubectl
 
-            aws --profile kubectl --region $<<parameters.aws_region>> \
-              eks update-kubeconfig \
-              --name $<<parameters.eks_cluster_name>> \
-              --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
+                  aws --profile kubectl --region $<<parameters.aws_region>> \
+                    eks update-kubeconfig \
+                    --name $<<parameters.eks_cluster_name>> \
+                    --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
 
-            echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
-            source $BASH_ENV
+                  echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+                  source $BASH_ENV
 
-            kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
-            if [ "<<parameters.additional_deployment_name>>" ]; then
-              IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
-              for additional_deployment in "${array[@]}"
-              do
-                kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
-              done
-            fi
+                  kubectl rollout restart deployment/<<parameters.deployment_name>> -n <<parameters.k8s_namespace>>
+                  if [ "<<parameters.additional_deployment_name>>" ]; then
+                    IFS=', ' read -r -a array \<<< "<<parameters.additional_deployment_name>>"
+                    for additional_deployment in "${array[@]}"
+                    do
+                      kubectl rollout restart deployment/${additional_deployment} -n <<parameters.k8s_namespace>>
+                    done
+                  fi
+      - when: # OIDC -  Restart the deployment through cross account session
+          condition: << parameters.assume_role_with_web_identity_enabled >>
+          steps:
+            - run:
+                name: Restart deployment
+                command: |
+                  tokenResponse=$(aws sts assume-role \
+                  --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >> \
+                  --role-session-name "AWSCLI-Session" --profile "oidc" --debug)
+                  aws configure set aws_access_key_id \
+                  $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
+                  --profile kubectl
+
+                  aws configure set aws_secret_access_key \
+                  $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
+                  --profile kubectl
+
+                  aws configure set aws_session_token \
+                  $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
+                  --profile kubectl
+
+                  aws --profile kubectl --region $<< parameters.aws_region >> \
+                  eks update-kubeconfig \
+                  --name $<< parameters.eks_cluster_name >> \
+                  --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >>
+
+                  cat ~/.aws/credentials
+                  cat ~/.kube/config
+
+                  echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+                  source $BASH_ENV
+
+                  kubectl rollout restart deployment/<<parameters.deployment_name >> -n << parameters.k8s_namespace >>
+                  if [ "<< parameters.additional_deployment_name >>" ]; then
+                    IFS=', ' read -r -a array \<<< "<< parameters.additional_deployment_name >>"
+                    for additional_deployment in "${array[@]}"
+                    do
+                      kubectl rollout restart deployment/${additional_deployment} -n << parameters.k8s_namespace >>
+                    done
+                  fi
 
 examples:
   build-push-staging:
