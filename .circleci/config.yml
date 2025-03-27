@@ -17,6 +17,9 @@ workflows:
     jobs:
       - orb-tools/lint
       - validate
+      - shellcheck/check:
+          dir: ./src/scripts
+          filters: *filters
       - orb-tools/publish-dev:
           context: circleci-orb
           orb-name: signavio/aws-ecr-eks
@@ -26,6 +29,7 @@ workflows:
           requires:
             - orb-tools/lint
             - validate
+            - shellcheck/check
       - orb-tools/dev-promote-prod-from-commit-subject:
           context: circleci-orb
           orb-name: signavio/aws-ecr-eks

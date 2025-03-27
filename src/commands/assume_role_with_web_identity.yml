@@ -1,0 +1,41 @@
+description: >
+  Assume a role in a account and create temporary credentials for aws authentication
+parameters:
+  role:
+    description: aws role name to assume
+    default: ""
+    type: string
+  account_id:
+    description: in which account the role should be assumed
+    default: ""
+    type: string
+  profile:
+    description: aws profile name
+    default: cdk
+    type: string
+  default_region:
+    description: default region for the generated profile
+    default: eu-central-1
+    type: string
+  debug:
+    description: print assumed role in pipeline
+    default: true
+    type: boolean
+  assume_role_with_web_identity_enabled:
+    description: enable assume role with web Identity
+    default: false
+    type: boolean
+steps:
+  - aws-cli/install
+  - when:
+      condition: << parameters.assume_role_with_web_identity_enabled >>
+      steps:
+        - run:
+            name: Assume Role with Web Identity
+            environment:
+              ROLE_NAME: << parameters.role >>
+              ACCOUNT_ID: << parameters.account_id >>
+              PROFILE: << parameters.profile >>
+              DEFAULT_REGION: << parameters.default_region >>
+              DEBUG: << parameters.debug >>
+            command: <<include(scripts/assume-role-with-web-identity.sh)>>
