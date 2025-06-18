@@ -450,9 +450,6 @@ jobs:
                   --name $<< parameters.eks_cluster_name >> \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >>
 
-                  cat ~/.aws/credentials
-                  cat ~/.kube/config
-
                   echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
                   source $BASH_ENV
 
