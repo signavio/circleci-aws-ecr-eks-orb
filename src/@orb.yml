@@ -447,8 +447,7 @@ jobs:
 
                   aws --profile kubectl --region $<< parameters.aws_region >> \
                   eks update-kubeconfig \
-                  --name $<< parameters.eks_cluster_name >> \
-                  --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >>
+                  --name $<< parameters.eks_cluster_name >>
 
                   echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
                   source $BASH_ENV
