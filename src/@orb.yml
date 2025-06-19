@@ -396,23 +396,23 @@ jobs:
                   --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>> \
                   --role-session-name AWSCLI-Session)
 
-                  aws configure set aws_access_key_id \
-                  $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-                  --profile kubectl
+                  key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
 
-                  aws configure set aws_secret_access_key \
-                  $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-                  --profile kubectl
-
-                  aws configure set aws_session_token \
-                  $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-                  --profile kubectl
+                  aws configure set aws_access_key_id "${key_id}" --profile "kubectl"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "kubectl"
+                  aws configure set aws_session_token "${session_token}" --profile "kubectl"
+                  aws configure set region "${AWS_REGION}" --profile "kubectl"
 
                   aws --profile kubectl --region $<<parameters.aws_region>> \
                     eks update-kubeconfig \
                     --name $<<parameters.eks_cluster_name>> \
                     --role-arn arn:aws:iam::$<<parameters.eks_account_id>>:role/$<<parameters.role_in_target_account>>
-
+                  
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
                   source $BASH_ENV
 
@@ -448,7 +448,8 @@ jobs:
                   aws --profile kubectl --region $<< parameters.aws_region >> \
                   eks update-kubeconfig \
                   --name $<< parameters.eks_cluster_name >> \
-                  --profile kubectl
+                  --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >>
+                  
 
                   echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
                   source $BASH_ENV
