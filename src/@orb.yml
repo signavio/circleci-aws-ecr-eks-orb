@@ -439,17 +439,17 @@ jobs:
                   aws configure set aws_session_token "${session_token}" --profile "kubectl"
                   aws configure set region "${AWS_REGION}" --profile "kubectl"
 
-                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
-                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
-                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
-                  echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
-                  source $BASH_ENV
-
                   aws --profile kubectl --region $<< parameters.aws_region >> \
                   eks update-kubeconfig \
                   --name $<< parameters.eks_cluster_name >> \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >>
 
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
+                  echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
+                  source $BASH_ENV
+                  
                   kubectl rollout restart deployment/<<parameters.deployment_name >> -n << parameters.k8s_namespace >>
                   if [ "<< parameters.additional_deployment_name >>" ]; then
                     IFS=', ' read -r -a array \<<< "<< parameters.additional_deployment_name >>"
