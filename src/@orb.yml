@@ -85,13 +85,13 @@ jobs:
         type: boolean
         default: false
       ecr_account_id:
-          description: Env var of ECR account ID
-          type: env_var_name
-          default: ECR_ACCOUNT_ID_PROD
+        description: Env var of ECR account ID
+        type: env_var_name
+        default: ECR_ACCOUNT_ID_PROD
       ecr_role_name:
-          description: Env var of ECR role name
-          type: env_var_name
-          default: ECR_ACCOUNT_ID_PROD
+        description: Env var of ECR role name
+        type: env_var_name
+        default: ECR_ACCOUNT_ID_PROD
     machine:
       image: ubuntu-2204:current
     steps:
@@ -260,13 +260,13 @@ jobs:
         type: boolean
         default: false
       ecr_account_id:
-          description: Env var of ECR account ID
-          type: env_var_name
-          default: ECR_ACCOUNT_ID_PROD
+        description: Env var of ECR account ID
+        type: env_var_name
+        default: ECR_ACCOUNT_ID_PROD
       ecr_role_name:
-          description: Env var of ECR role name
-          type: env_var_name
-          default: ECR_ACCOUNT_ID_PROD
+        description: Env var of ECR role name
+        type: env_var_name
+        default: ECR_ACCOUNT_ID_PROD
     machine:
       image: ubuntu-2204:current
     steps:
@@ -433,26 +433,24 @@ jobs:
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >> \
                   --role-session-name "AWSCLI-Session" --profile "oidc" --debug)
-                  aws configure set aws_access_key_id \
-                  $(echo $tokenResponse | jq -r .Credentials.AccessKeyId) \
-                  --profile kubectl
 
-                  aws configure set aws_secret_access_key \
-                  $(echo $tokenResponse | jq -r .Credentials.SecretAccessKey) \
-                  --profile kubectl
+                  key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
+                  access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
+                  session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
 
-                  aws configure set aws_session_token \
-                  $(echo $tokenResponse | jq -r .Credentials.SessionToken) \
-                  --profile kubectl
+                  aws configure set aws_access_key_id "${key_id}" --profile "kubectl"
+                  aws configure set aws_secret_access_key "${access_key}" --profile "kubectl"
+                  aws configure set aws_session_token "${session_token}" --profile "kubectl"
+                  aws configure set region "${AWS_REGION}" --profile "kubectl"
 
                   aws --profile kubectl --region $<< parameters.aws_region >> \
                   eks update-kubeconfig \
                   --name $<< parameters.eks_cluster_name >> \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >>
 
-                  cat ~/.aws/credentials
-                  cat ~/.kube/config
-
+                  echo "export AWS_ACCESS_KEY_ID=${key_id}" >> $BASH_ENV
+                  echo "export AWS_SECRET_ACCESS_KEY=${access_key}" >> $BASH_ENV
+                  echo "export AWS_SESSION_TOKEN=${session_token}" >> $BASH_ENV
                   echo 'export AWS_PROFILE=kubectl' >> $BASH_ENV
                   source $BASH_ENV
 
@@ -494,4 +492,3 @@ examples:
                 context: ECR
                 repo: myecrrepo
                 deployment_name: mydeployment
-
