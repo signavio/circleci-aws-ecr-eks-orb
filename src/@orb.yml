@@ -383,7 +383,6 @@ jobs:
             sudo wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
             sudo chmod +x ./kubectl
             sudo cp ./kubectl /bin/kubectl
-            sudo apt-get update && sudo apt-get install -y jq
       - when: # NON_OIDC - Restart the deployment directly from the pipeline session
           condition:
             equal:
