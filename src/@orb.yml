@@ -63,6 +63,12 @@ jobs:
         description: Additional arguments to pass to the Docker build step
         type: string
         default: ""
+      push_image:
+        type: boolean
+        default: true
+        description: >
+          Set to false to build an image without pushing to repository. Defaults
+          is true.
       attach_workspace:
         type: boolean
         default: true
@@ -179,6 +185,7 @@ jobs:
                 tag: <<parameters.tag>>
                 dockerfile: <<parameters.dockerfile>>
                 extra_build_args: <<parameters.extra_build_args>>
+                push_image: <<parameters.push_image>>
                 platform: <<parameters.platform>>
       - when: # OIDC - Build and Push image through the OIDC cross account approach
           condition:
@@ -200,6 +207,7 @@ jobs:
                 tag: <<parameters.tag>>
                 dockerfile: <<parameters.dockerfile>>
                 extra_build_args: <<parameters.extra_build_args>>
+                push_image: <<parameters.push_image>>
                 platform: <<parameters.platform>>
   #-----
   build-push-restart:
