@@ -148,7 +148,7 @@ jobs:
                   aws configure set region "${AWS_REGION}" --profile "oidc"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
-                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
+                  --role-session-name AWSCLI-Session-cross --profile "oidc")
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
@@ -325,7 +325,7 @@ jobs:
                   aws configure set region "${AWS_REGION}" --profile "oidc"
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::${!ECR_ACCOUNT_ID}:role/${!ECR_ROLE_NAME} \
-                  --role-session-name AWSCLI-Session-cross --profile "oidc" --debug)
+                  --role-session-name AWSCLI-Session-cross --profile "oidc")
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
                   session_token=$(echo "${tokenResponse}" | jq .Credentials.SessionToken | xargs)
@@ -439,7 +439,7 @@ jobs:
                 command: |
                   tokenResponse=$(aws sts assume-role \
                   --role-arn arn:aws:iam::$<< parameters.eks_account_id >>:role/$<< parameters.role_in_target_account >> \
-                  --role-session-name "AWSCLI-Session" --profile "oidc" --debug)
+                  --role-session-name "AWSCLI-Session" --profile "oidc")
 
                   key_id=$(echo "${tokenResponse}" | jq .Credentials.AccessKeyId | xargs)
                   access_key=$(echo "${tokenResponse}" | jq .Credentials.SecretAccessKey | xargs)
